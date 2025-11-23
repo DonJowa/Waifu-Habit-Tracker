@@ -3,11 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Waifu Tracker: English Edition</title>
-    
-    <!-- Manifest for PWA (Make sure you have the file manifest.json) -->
+    <title>Waifu Tracker: V28 Trading UI</title>
     <link rel="manifest" href="manifest.json">
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -22,6 +19,7 @@
             --btn-inactive: #333;
             --gold: #ffd700;
             --legendary: #d500f9;
+            --silver: #e0e0e0;
             --xp-bar: #00e5ff;
         }
 
@@ -37,7 +35,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* BACKGROUND */
         #bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background-color: #0f0f0f; 
             background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('bg.png');
@@ -126,7 +123,6 @@
         }
         .waifu-card:hover { transform: translateY(-8px) scale(1.03); z-index: 10; box-shadow: 0 15px 30px rgba(0,0,0,0.7); border-color: #fff; }
         
-        /* Ensure these images exist in your folder: card_common.jpg, card_rare.jpg, card_legendary.jpg */
         .bg-common { background-image: url('card_common.jpg'); border-color: #888; }
         .bg-rare { background-image: url('card_rare.jpg'); border-color: var(--gold); }
         .bg-legendary { background-image: url('card_legendary.jpg'); border-color: var(--legendary); }
@@ -144,8 +140,47 @@
         .waifu-count { position: absolute; top: 8px; right: 10px; font-size: 2.2rem; font-weight: 900; line-height: 1; z-index: 6; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px rgba(0,0,0,0.8); }
         .count-special { color: #fff; } .count-shiny { color: var(--gold); } .count-legendary { color: var(--legendary); }
 
+        /* TRADING BOX (NEW STYLE) */
+        .trade-box {
+            background: rgba(30, 30, 30, 0.95);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .trade-header {
+            font-size: 0.85rem; color: #888; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; font-weight: bold;
+        }
+        .trade-actions { display: flex; gap: 10px; }
+        .trade-btn {
+            flex: 1;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+        }
+        .trade-btn:active { transform: scale(0.95); }
+        .trade-btn:hover { background: #2a2a2a; border-color: #666; }
+        
+        /* Trade Typography */
+        .trade-row {
+            font-size: 1.4rem;
+            font-weight: 900;
+            margin-bottom: 5px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            text-shadow: 0 2px 2px rgba(0,0,0,0.5);
+        }
+        .cost-silver { color: var(--silver); text-shadow: 0 0 5px rgba(224, 224, 224, 0.3); }
+        .cost-gold { color: var(--gold); text-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
+        .gain-legendary { color: var(--legendary); text-shadow: 0 0 8px rgba(213, 0, 249, 0.4); }
+        .arrow { color: #555; font-size: 1rem; }
+        .trade-desc { font-size: 0.7rem; color: #888; text-transform: uppercase; }
+
         /* PROGRESS & STATS */
-        .progress-box { background: rgba(30, 30, 30, 0.95); padding: 15px; border-radius: 12px; margin-top: 5px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); }
+        .progress-box { background: rgba(30, 30, 30, 0.95); padding: 15px; border-radius: 12px; margin-top: 15px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); }
         .stats-flex { display: flex; gap: 25px; margin-bottom: 8px; }
         .stat-item { display: flex; flex-direction: column; }
         .stat-number { font-size: 1.4rem; font-weight: bold; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
@@ -223,6 +258,22 @@
                 <div class="waifu-info"><div class="waifu-label">Legendary</div></div>
             </div>
         </div>
+        
+        <!-- NO NUT TRADING UI -->
+        <div class="trade-box">
+            <div class="trade-header">Black Market</div>
+            <div class="trade-actions">
+                <button class="trade-btn" onclick="trade('nonut', 'special', 15)">
+                    <div class="trade-row"><span class="cost-silver">15</span><span class="arrow">➡</span><span class="gain-legendary">1</span></div>
+                    <div class="trade-desc">Special > Legendary</div>
+                </button>
+                <button class="trade-btn" onclick="trade('nonut', 'shiny', 2)">
+                    <div class="trade-row"><span class="cost-gold">2</span><span class="arrow">➡</span><span class="gain-legendary">1</span></div>
+                    <div class="trade-desc">Shiny > Legendary</div>
+                </button>
+            </div>
+        </div>
+
         <div class="progress-box">
             <div class="streak-header stats-flex">
                 <div class="stat-item"><div class="stat-label">Streak</div><div class="stat-number"><span id="nn-streak">0</span>w</div></div>
@@ -250,6 +301,22 @@
                 <div class="waifu-info"><div class="waifu-label">Legendary</div></div>
             </div>
         </div>
+
+        <!-- SLEEP TRADING UI -->
+        <div class="trade-box">
+            <div class="trade-header">Black Market</div>
+            <div class="trade-actions">
+                <button class="trade-btn" onclick="trade('sleep', 'special', 15)">
+                    <div class="trade-row"><span class="cost-silver">15</span><span class="arrow">➡</span><span class="gain-legendary">1</span></div>
+                    <div class="trade-desc">Special > Legendary</div>
+                </button>
+                <button class="trade-btn" onclick="trade('sleep', 'shiny', 2)">
+                    <div class="trade-row"><span class="cost-gold">2</span><span class="arrow">➡</span><span class="gain-legendary">1</span></div>
+                    <div class="trade-desc">Shiny > Legendary</div>
+                </button>
+            </div>
+        </div>
+
         <div class="progress-box">
             <div class="streak-header stats-flex">
                 <div class="stat-item"><div class="stat-label">Streak</div><div class="stat-number"><span id="sl-streak">0</span>w</div></div>
@@ -289,23 +356,10 @@
     </div>
 
     <script>
-        // Translated Arrays
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
         const titles = ["Novice", "Beginner", "Apprentice", "Disciplined", "Guardian", "Knight", "Elite", "Master", "Grandmaster", "Legend", "Mythic", "Godlike"];
 
-        let config = { 
-            allowedDays:[2,5], 
-            sleepExemptDays:[5,6], 
-            targetWakeTime:8, 
-            wakeTimes:[
-                {v:7,l:'07:00'},
-                {v:8,l:'08:00'},
-                {v:9,l:'09:00'},
-                {v:10,l:'10:00'},
-                {v:11,l:'11:00'},
-                {v:12,l:'12:00+'}
-            ] 
-        };
+        let config = { allowedDays:[2,5], sleepExemptDays:[5,6], targetWakeTime:8, wakeTimes:[{v:7,l:'07:00'},{v:8,l:'08:00'},{v:9,l:'09:00'},{v:10,l:'10:00'},{v:11,l:'11:00'},{v:12,l:'12:00+'}] };
         let rewards = { nonut:{special:0,shiny:0,legendary:0,streak:0}, sleep:{special:0,shiny:0,legendary:0,streak:0} };
         let rpg = { xp: 0 }; 
         let currentWeek = [], archive = [];
@@ -351,6 +405,23 @@
             localStorage.setItem('wt_config', JSON.stringify(config));
             localStorage.setItem('wt_rewards', JSON.stringify(rewards));
             localStorage.setItem('wt_rpg', JSON.stringify(rpg));
+        }
+
+        // --- TRADING SYSTEM ---
+        function trade(category, type, cost) {
+            let bank = rewards[category];
+            if (bank[type] >= cost) {
+                if(confirm(`Trade ${cost} ${type} for 1 Legendary?`)) {
+                    bank[type] -= cost;
+                    bank.legendary++;
+                    save();
+                    renderRewards();
+                    triggerFireworks();
+                    alert("Trade Successful! You got a Legendary!");
+                }
+            } else {
+                alert(`Not enough ${type}! You need ${cost}.`);
+            }
         }
 
         // --- EXPORT / IMPORT ---
@@ -400,7 +471,11 @@
             rpg.xp += amount;
             const newData = getLevelData(rpg.xp);
             if (newData.level > oldData.level) {
-                alert(`LEVEL UP! You are now Level ${newData.level}!`);
+                // BONUS ON LEVEL UP
+                rewards.nonut.special++;
+                rewards.sleep.special++;
+                save(); // Save immediately
+                alert(`LEVEL UP! You are now Level ${newData.level}!\nBonus: +1 Special No Nut-chan & +1 Special Sleep-chan!`);
                 triggerFireworks();
             }
             save();
