@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Waifu Tracker: V28 Trading UI</title>
+    <title>Waifu Tracker: V29 Fix Layout</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -113,15 +113,22 @@
         .summary-view { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 8px; }
         .edit-btn { background: transparent; border: 1px solid #555; padding: 5px 10px; font-size: 0.8rem; }
 
-        /* WAIFU CARDS */
-        .waifu-grid { display: flex; gap: 20px; overflow-x: auto; padding: 10px 5px 20px 5px; scrollbar-width: none; }
+        /* WAIFU CARDS - FIXAD PADDING */
+        .waifu-grid { 
+            display: flex; 
+            gap: 20px; 
+            overflow-x: auto; 
+            /* ÖKAD PADDING: Topp 25px (för lyftet) och Botten 40px (för skuggan) */
+            padding: 25px 10px 40px 10px; 
+            scrollbar-width: none; 
+        }
         .waifu-card { 
             flex: 0 0 170px; height: 260px; padding: 0; border-radius: 14px; border: 1px solid #444;
             text-align: center; position: relative; overflow: hidden; cursor: pointer;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: transform 0.3s ease, box-shadow 0.3s ease;
             background-size: cover; background-position: center; background-color: #222;
         }
-        .waifu-card:hover { transform: translateY(-8px) scale(1.03); z-index: 10; box-shadow: 0 15px 30px rgba(0,0,0,0.7); border-color: #fff; }
+        .waifu-card:hover { transform: translateY(-12px) scale(1.03); z-index: 10; box-shadow: 0 15px 30px rgba(0,0,0,0.7); border-color: #fff; }
         
         .bg-common { background-image: url('card_common.jpg'); border-color: #888; }
         .bg-rare { background-image: url('card_rare.jpg'); border-color: var(--gold); }
@@ -140,7 +147,7 @@
         .waifu-count { position: absolute; top: 8px; right: 10px; font-size: 2.2rem; font-weight: 900; line-height: 1; z-index: 6; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px rgba(0,0,0,0.8); }
         .count-special { color: #fff; } .count-shiny { color: var(--gold); } .count-legendary { color: var(--legendary); }
 
-        /* TRADING BOX (NEW STYLE) */
+        /* TRADING BOX */
         .trade-box {
             background: rgba(30, 30, 30, 0.95);
             padding: 15px;
@@ -165,7 +172,6 @@
         .trade-btn:active { transform: scale(0.95); }
         .trade-btn:hover { background: #2a2a2a; border-color: #666; }
         
-        /* Trade Typography */
         .trade-row {
             font-size: 1.4rem;
             font-weight: 900;
@@ -390,12 +396,7 @@
         }
 
         function initWeek() {
-            currentWeek = days.map((d,i) => ({ 
-                day:d, idx:i, 
-                allowed:config.allowedDays.includes(i), 
-                exempt:config.sleepExemptDays.includes(i), 
-                sleep:null, kept:null, note: "" 
-            }));
+            currentWeek = days.map((d,i) => ({ day:d, idx:i, allowed:config.allowedDays.includes(i), exempt:config.sleepExemptDays.includes(i), sleep:null, kept:null, note: "" }));
             save();
         }
 
@@ -424,36 +425,7 @@
             }
         }
 
-        // --- EXPORT / IMPORT ---
-        function exportData() {
-            const data = { config, rewards, rpg, currentWeek, archive, exportDate: new Date().toISOString() };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
-            const a = document.createElement('a');
-            a.href = dataStr;
-            a.download = "waifu_tracker_backup.json";
-            a.click();
-        }
-
-        function importData(input) {
-            const file = input.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const json = JSON.parse(e.target.result);
-                    if(json.config) localStorage.setItem('wt_config', JSON.stringify(json.config));
-                    if(json.rewards) localStorage.setItem('wt_rewards', JSON.stringify(json.rewards));
-                    if(json.rpg) localStorage.setItem('wt_rpg', JSON.stringify(json.rpg));
-                    if(json.currentWeek) localStorage.setItem('wt_week', JSON.stringify(json.currentWeek));
-                    if(json.archive) localStorage.setItem('wt_archive', JSON.stringify(json.archive));
-                    alert("Data imported! Reloading page.");
-                    location.reload();
-                } catch(err) { alert("Import error."); }
-            };
-            reader.readAsText(file);
-        }
-
-        // --- RPG ---
+        // --- RPG SYSTEM (Updated) ---
         function getLevelData(totalXP) {
             let level = 1;
             let cost = 500; 
@@ -497,135 +469,76 @@
         // --- MAIN LOGIC ---
         function editNote(i) {
             const note = prompt("Note for " + currentWeek[i].day + ":", currentWeek[i].note || "");
-            if (note !== null) {
-                currentWeek[i].note = note;
-                save();
-                renderLog();
-            }
+            if (note !== null) { currentWeek[i].note = note; save(); renderLog(); }
         }
 
         function renderLog() {
             const container = document.getElementById('week-container');
             container.innerHTML = '';
-            let jsDay = new Date().getDay(); 
-            let todayIdx = jsDay === 0 ? 6 : jsDay - 1; 
+            let jsDay = new Date().getDay(); let todayIdx = jsDay === 0 ? 6 : jsDay - 1; 
 
             currentWeek.forEach((d, i) => {
                 const card = document.createElement('div');
                 let classes = 'day-card';
-                if(d.allowed) classes += ' allowed-day';
-                if(d.exempt) classes += ' exempt-day';
-                if(i === todayIdx) classes += ' is-today';
+                if(d.allowed) classes += ' allowed-day'; if(d.exempt) classes += ' exempt-day'; if(i === todayIdx) classes += ' is-today';
                 if(d.sleep !== null && d.kept !== null) classes += ' completed';
                 card.className = classes;
 
                 let badges = '';
                 if(d.allowed) badges += '<span class="badge badge-allowed">Allowed</span>';
                 if(d.exempt) badges += '<span class="badge badge-exempt">Exempt</span>';
+                const noteClass = d.note ? "has-note" : ""; const noteIndicator = d.note ? "📝" : "📓";
 
-                const noteClass = d.note ? "has-note" : "";
-                const noteIndicator = d.note ? "📝" : "📓";
-
-                let content = `
-                    <div class="card-header">
-                        <span class="day-title">${d.day}</span>
-                        <div class="header-right">
-                            <div class="badges">${badges}</div>
-                            <button class="journal-btn ${noteClass}" onclick="editNote(${i})">${noteIndicator}</button>
-                        </div>
-                    </div>`;
+                let content = `<div class="card-header"><span class="day-title">${d.day}</span><div class="header-right"><div class="badges">${badges}</div><button class="journal-btn ${noteClass}" onclick="editNote(${i})">${noteIndicator}</button></div></div>`;
 
                 if (d.sleep !== null && d.kept !== null) {
                     const sleepText = d.sleep <= config.targetWakeTime || d.exempt ? '✅ On Time' : '❌ Overslept';
-                    
                     let nutText = "";
-                    if (d.allowed) {
-                        nutText = d.kept ? '✅ Indulged' : '⏸️ Skipped';
-                    } else {
-                        nutText = d.kept ? '✅ Success' : '❌ Failed';
-                    }
-
-                    content += `
-                        <div class="summary-view">
-                            <div class="summary-text"><b>Sleep:</b> ${findLabel(d.sleep)} (${sleepText})<br><b>Status:</b> ${nutText}</div>
-                            <button class="edit-btn" onclick="resetDay(${i})">Edit</button>
-                        </div>`;
+                    if (d.allowed) nutText = d.kept ? '✅ Indulged' : '⏸️ Skipped';
+                    else nutText = d.kept ? '✅ Success' : '❌ Failed';
+                    content += `<div class="summary-view"><div class="summary-text"><b>Sleep:</b> ${findLabel(d.sleep)} (${sleepText})<br><b>Status:</b> ${nutText}</div><button class="edit-btn" onclick="resetDay(${i})">Edit</button></div>`;
                 } else {
-                    let sleepBtns = '';
-                    config.wakeTimes.forEach(t => { sleepBtns += `<button class="sleep-btn ${d.sleep===t.v?'selected':''}" onclick="setSleep(${i},${t.v})">${t.l}</button>`; });
-                    let nutBtns = d.allowed ? 
-                        `<button class="fap-btn allowed-action ${d.kept===true?'selected':''}" onclick="setKept(${i},true)">Indulge</button><button class="fap-btn allowed-skip ${d.kept===false?'selected':''}" onclick="setKept(${i},false)">Skip</button>` : 
-                        `<button class="fap-btn success-btn ${d.kept===true?'selected':''}" onclick="setKept(${i},true)">Success</button><button class="fap-btn fail-btn ${d.kept===false?'selected':''}" onclick="setKept(${i},false)">Fail</button>`;
+                    let sleepBtns = ''; config.wakeTimes.forEach(t => { sleepBtns += `<button class="sleep-btn ${d.sleep===t.v?'selected':''}" onclick="setSleep(${i},${t.v})">${t.l}</button>`; });
+                    let nutBtns = d.allowed ? `<button class="fap-btn allowed-action ${d.kept===true?'selected':''}" onclick="setKept(${i},true)">Indulge</button><button class="fap-btn allowed-skip ${d.kept===false?'selected':''}" onclick="setKept(${i},false)">Skip</button>` : `<button class="fap-btn success-btn ${d.kept===true?'selected':''}" onclick="setKept(${i},true)">Success</button><button class="fap-btn fail-btn ${d.kept===false?'selected':''}" onclick="setKept(${i},false)">Fail</button>`;
                     content += `<div style="margin-bottom:5px;font-size:0.9rem;">Woke up:</div><div class="btn-grid">${sleepBtns}</div><div style="margin-bottom:5px;font-size:0.9rem;">Status:</div><div class="btn-grid" style="grid-template-columns:1fr 1fr;">${nutBtns}</div>`;
                 }
-                card.innerHTML = content;
-                container.appendChild(card);
+                card.innerHTML = content; container.appendChild(card);
             });
         }
 
         function findLabel(val) { const t = config.wakeTimes.find(x => x.v === val); return t ? t.l : val; }
-        
-        function setSleep(i, v) { 
-            if (currentWeek[i].sleep === null) {
-                if (currentWeek[i].exempt || v <= config.targetWakeTime) {
-                    addXP(5);
-                }
-            }
-            currentWeek[i].sleep = v; save(); renderLog(); 
-        }
-
-        function setKept(i, v) { 
-            if(currentWeek[i].kept === null) {
-                if(!currentWeek[i].allowed && v === true) addXP(10);
-                else if(currentWeek[i].allowed) addXP(5);
-            }
-            currentWeek[i].kept = v; save(); renderLog(); 
-        }
+        function setSleep(i, v) { if (currentWeek[i].sleep === null) { if (currentWeek[i].exempt || v <= config.targetWakeTime) addXP(5); } currentWeek[i].sleep = v; save(); renderLog(); }
+        function setKept(i, v) { if(currentWeek[i].kept === null) { if(!currentWeek[i].allowed && v === true) addXP(10); else if(currentWeek[i].allowed) addXP(5); } currentWeek[i].kept = v; save(); renderLog(); }
         function resetDay(i) { currentWeek[i].sleep = null; currentWeek[i].kept = null; save(); renderLog(); }
 
         function archiveWeek() {
             const unlogged = currentWeek.filter(d => d.sleep === null || d.kept === null).length;
-            if(unlogged > 0) {
-                if(!confirm(`WARNING: You have ${unlogged} empty days. Proceed?`)) return;
-            } else {
-                if(!confirm("Is the week over? Data will be archived.")) return;
-            }
+            if(unlogged > 0) { if(!confirm(`WARNING: You have ${unlogged} empty days. Proceed?`)) return; } 
+            else { if(!confirm("Is the week over? Data will be archived.")) return; }
             
             let itemsWon = [];
             let failReasons = [];
-            
             const nnRequiredDays = currentWeek.filter(d => !d.allowed);
             const nnSucc = nnRequiredDays.every(d => d.kept === true);
             
             if(nnSucc) {
-                rewards.nonut.streak++;
-                rewards.nonut.special++; 
-                addXP(50); 
+                rewards.nonut.streak++; rewards.nonut.special++; addXP(50); 
                 itemsWon.push("💖 Special No Nut-chan (+50 XP)");
                 if(rewards.nonut.streak > 0 && rewards.nonut.streak % 4 === 0) { rewards.nonut.shiny++; itemsWon.push("✨ Shiny No Nut-chan"); addXP(100); }
                 if(rewards.nonut.streak > 0 && rewards.nonut.streak % 8 === 0) { rewards.nonut.legendary++; itemsWon.push("👑 Legendary No Nut-chan"); addXP(200); }
-            } else {
-                rewards.nonut.streak = 0;
-                failReasons.push("No-Nut: Failed.");
-            }
+            } else { rewards.nonut.streak = 0; failReasons.push("No-Nut: Failed."); }
 
             const slRequiredDays = currentWeek.filter(d => !d.exempt);
             const slSucc = slRequiredDays.every(d => d.sleep !== null && d.sleep <= config.targetWakeTime);
 
             if(slSucc) {
-                rewards.sleep.streak++;
-                rewards.sleep.special++; 
-                addXP(50); 
+                rewards.sleep.streak++; rewards.sleep.special++; addXP(50); 
                 itemsWon.push("💤 Special Sleep-chan (+50 XP)");
                 if(rewards.sleep.streak > 0 && rewards.sleep.streak % 4 === 0) { rewards.sleep.shiny++; itemsWon.push("✨ Shiny Sleep-chan"); addXP(100); }
                 if(rewards.sleep.streak > 0 && rewards.sleep.streak % 8 === 0) { rewards.sleep.legendary++; itemsWon.push("👑 Legendary Sleep-chan"); addXP(200); }
-            } else {
-                rewards.sleep.streak = 0;
-                failReasons.push("Sleep: Missed target.");
-            }
+            } else { rewards.sleep.streak = 0; failReasons.push("Sleep: Missed target."); }
 
             save(); 
-
             if (itemsWon.length > 0) triggerFireworks();
             let msg = "";
             if(itemsWon.length > 0) msg += "CONGRATS! You got:\n" + itemsWon.join("\n") + "\n\n";
@@ -635,43 +548,27 @@
             alert(msg);
 
             archive.push({date:new Date(), data:[...currentWeek]});
-            initWeek();
-            renderLog();
-            renderRewards();
-            renderStats();
+            initWeek(); renderLog(); renderRewards(); renderStats();
         }
 
         function renderRewards() {
-            const setTxt = (id, val) => {
-                const el = document.getElementById(id);
-                if(el) el.innerText = val;
-            };
-            setTxt('nn-special-count', rewards.nonut.special);
-            setTxt('nn-shiny-count', rewards.nonut.shiny);
-            setTxt('nn-legendary-count', rewards.nonut.legendary);
-            setTxt('nn-streak', rewards.nonut.streak);
-            
-            setTxt('sl-special-count', rewards.sleep.special);
-            setTxt('sl-shiny-count', rewards.sleep.shiny);
-            setTxt('sl-legendary-count', rewards.sleep.legendary);
-            setTxt('sl-streak', rewards.sleep.streak);
+            const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+            setTxt('nn-special-count', rewards.nonut.special); setTxt('nn-shiny-count', rewards.nonut.shiny);
+            setTxt('nn-legendary-count', rewards.nonut.legendary); setTxt('nn-streak', rewards.nonut.streak);
+            setTxt('sl-special-count', rewards.sleep.special); setTxt('sl-shiny-count', rewards.sleep.shiny);
+            setTxt('sl-legendary-count', rewards.sleep.legendary); setTxt('sl-streak', rewards.sleep.streak);
 
             let nnTotal = 0, slTotal = 0;
             archive.forEach(w => {
-                const reqNN = w.data.filter(d => !d.allowed);
-                if(reqNN.length > 0 && reqNN.every(d => d.kept === true)) nnTotal++;
-                const reqSL = w.data.filter(d => !d.exempt);
-                if(reqSL.length > 0 && reqSL.every(d => d.sleep !== null && d.sleep <= config.targetWakeTime)) slTotal++;
+                const reqNN = w.data.filter(d => !d.allowed); if(reqNN.length > 0 && reqNN.every(d => d.kept === true)) nnTotal++;
+                const reqSL = w.data.filter(d => !d.exempt); if(reqSL.length > 0 && reqSL.every(d => d.sleep !== null && d.sleep <= config.targetWakeTime)) slTotal++;
             });
             setTxt('nn-total', nnTotal); setTxt('sl-total', slTotal);
-
-            updateBar('nn', rewards.nonut.streak);
-            updateBar('sl', rewards.sleep.streak);
+            updateBar('nn', rewards.nonut.streak); updateBar('sl', rewards.sleep.streak);
         }
 
         function updateBar(prefix, streak) {
-            let cyclePos = streak % 8;
-            if (streak > 0 && cyclePos === 0) cyclePos = 8;
+            let cyclePos = streak % 8; if (streak > 0 && cyclePos === 0) cyclePos = 8;
             const percent = (cyclePos / 8) * 100;
             document.getElementById(`${prefix}-bar`).style.width = percent + '%';
             let msg = cyclePos < 4 ? `Next Shiny: ${4 - cyclePos}w` : (cyclePos < 8 ? `Next Legendary: ${8 - cyclePos}w` : "Level Up! New cycle next week.");
@@ -683,24 +580,18 @@
             let all = []; archive.slice(-4).forEach(w => all.push(...w.data)); all.push(...currentWeek);
             all.slice(-28).forEach(d => {
                 const el = document.createElement('div'); el.className = 'heatmap-day'; el.innerText = d.day.substring(0,1);
-                if(d.sleep===null) el.style.background='#222';
-                else if(d.exempt) el.className+=' neutral';
-                else if(d.sleep<=config.targetWakeTime) el.className+=' success';
-                else el.className+=' fail';
+                if(d.sleep===null) el.style.background='#222'; else if(d.exempt) el.className+=' neutral'; else if(d.sleep<=config.targetWakeTime) el.className+=' success'; else el.className+=' fail';
                 hm.appendChild(el);
             });
-
             const ctx = document.getElementById('sleepChart').getContext('2d');
             const pts = all.filter(d=>d.sleep!==null).slice(-30);
             if(window.sleepChartInstance) window.sleepChartInstance.destroy();
             window.sleepChartInstance = new Chart(ctx, { type:'line', data:{ labels:pts.map(d=>d.day.substring(0,3)), datasets:[{ label:'Time', data:pts.map(d=>d.sleep), borderColor:'#7c4dff', tension:0.3 }] }, options:{ scales:{y:{min:6,max:13}}, plugins:{legend:{display:false}} } });
-
+            
             let nnWins = 0, nnLosses = 0;
             archive.forEach(w => {
-                const req = w.data.filter(d => !d.allowed);
-                if(req.length === 0) return; 
-                const isWin = req.every(d => d.kept === true);
-                if(isWin) nnWins++; else nnLosses++;
+                const req = w.data.filter(d => !d.allowed); if(req.length === 0) return; 
+                const isWin = req.every(d => d.kept === true); if(isWin) nnWins++; else nnLosses++;
             });
             const ctxF = document.getElementById('fapChart').getContext('2d');
             if(window.fapChartInstance) window.fapChartInstance.destroy();
@@ -714,15 +605,13 @@
                 const c = document.getElementById(id); c.innerHTML='';
                 all.forEach((d,i)=>{ c.innerHTML+=`<label><input type="checkbox" value="${i}" ${src.includes(i)?'checked':''}> ${d}</label>`; });
             };
-            makeChecks('days-list', config.allowedDays, days);
-            makeChecks('exempt-list', config.sleepExemptDays, days);
+            makeChecks('days-list', config.allowedDays, days); makeChecks('exempt-list', config.sleepExemptDays, days);
         }
 
         function saveSettings() {
             config.targetWakeTime = parseFloat(document.getElementById('target-time-select').value);
             const getVals = (id) => Array.from(document.querySelectorAll(`#${id} input:checked`)).map(cb=>parseInt(cb.value));
-            config.allowedDays = getVals('days-list');
-            config.sleepExemptDays = getVals('exempt-list');
+            config.allowedDays = getVals('days-list'); config.sleepExemptDays = getVals('exempt-list');
             currentWeek.forEach((d, i) => { d.allowed = config.allowedDays.includes(i); d.exempt = config.sleepExemptDays.includes(i); });
             save(); renderLog(); alert("Settings saved!");
         }
@@ -730,16 +619,9 @@
         function resetData(){ if(confirm("WARNING: All data will be deleted. Continue?")) { localStorage.clear(); location.reload(); } }
         function switchTab(id) { document.querySelectorAll('.content-section').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.classList.add('active'); if(id==='stats') renderStats(); }
         function openModal(src){ document.getElementById('modalImg').src=src; document.getElementById('imgModal').style.display='flex'; }
-        
-        function triggerFireworks() {
-            const c=document.getElementById('fireworksCanvas'), x=c.getContext('2d'); c.width=window.innerWidth; c.height=window.innerHeight;
-            let p=[]; for(let i=0;i<60;i++) p.push({x:c.width/2,y:c.height/2,vx:(Math.random()-.5)*12,vy:(Math.random()-.5)*12,c:`hsl(${Math.random()*360},100%,50%)`,a:1});
-            function anim(){
-                x.clearRect(0,0,c.width,c.height);
-                p.forEach((k,i)=>{k.x+=k.vx;k.y+=k.vy;k.vy+=0.1;k.a-=0.02;x.globalAlpha=k.a;x.fillStyle=k.c;x.fillRect(k.x,k.y,4,4);if(k.a<=0)p.splice(i,1)});
-                if(p.length)requestAnimationFrame(anim);
-            } anim();
-        }
+        function exportData() { const data = { config, rewards, rpg, currentWeek, archive, exportDate: new Date().toISOString() }; const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); const a = document.createElement('a'); a.href = dataStr; a.download = "waifu_tracker_backup.json"; a.click(); }
+        function importData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const json = JSON.parse(e.target.result); if(json.config) localStorage.setItem('wt_config', JSON.stringify(json.config)); if(json.rewards) localStorage.setItem('wt_rewards', JSON.stringify(json.rewards)); if(json.rpg) localStorage.setItem('wt_rpg', JSON.stringify(json.rpg)); if(json.currentWeek) localStorage.setItem('wt_week', JSON.stringify(json.currentWeek)); if(json.archive) localStorage.setItem('wt_archive', JSON.stringify(json.archive)); alert("Data imported! Reloading page."); location.reload(); } catch(err) { alert("Import error."); } }; reader.readAsText(file); }
+        function triggerFireworks() { const c=document.getElementById('fireworksCanvas'), x=c.getContext('2d'); c.width=window.innerWidth; c.height=window.innerHeight; let p=[]; for(let i=0;i<60;i++) p.push({x:c.width/2,y:c.height/2,vx:(Math.random()-.5)*12,vy:(Math.random()-.5)*12,c:`hsl(${Math.random()*360},100%,50%)`,a:1}); function anim(){ x.clearRect(0,0,c.width,c.height); p.forEach((k,i)=>{k.x+=k.vx;k.y+=k.vy;k.vy+=0.1;k.a-=0.02;x.globalAlpha=k.a;x.fillStyle=k.c;x.fillRect(k.x,k.y,4,4);if(k.a<=0)p.splice(i,1)}); if(p.length)requestAnimationFrame(anim); } anim(); }
 
         init();
     </script>
