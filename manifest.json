@@ -1,6 +1,6 @@
 {
-  "name": "Waifu Tracker",
-  "short_name": "Tracker",
+  "name": "Waifu Habit Tracker",
+  "short_name": "Waifu Habit Tracker",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#121212",
