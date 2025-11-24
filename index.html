@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Waifu Tracker: V58 Perfect Menu</title>
+    <title>Waifu Tracker: V62 Snappy Audio</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -39,7 +39,7 @@
             color: var(--text-color);
             margin: 0;
             padding: 15px;
-            padding-bottom: 140px;
+            padding-bottom: 300px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -55,63 +55,24 @@
             transition: background-image 0.5s ease;
         }
 
-        /* --- UPDATED TABS (Perfect Fit) --- */
+        /* TABS */
         .tabs {
-            display: flex; 
-            width: 100%; 
-            max-width: 600px;
-            background: rgba(30, 30, 30, 0.8); 
-            backdrop-filter: blur(10px);
-            border-radius: 12px; 
-            padding: 4px; 
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
-            border: 1px solid rgba(255,255,255,0.1);
-            box-sizing: border-box; /* Important so padding doesn't add width */
+            display: flex; width: 100%; max-width: 600px;
+            background: rgba(30, 30, 30, 0.8); backdrop-filter: blur(10px);
+            border-radius: 12px; padding: 4px; margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            box-sizing: border-box;
         }
-
         .tab-btn { 
-            /* Forces all buttons to have equal width, regardless of text length */
-            flex: 1 1 0px; 
-            width: 0; 
-            
-            background: transparent; 
-            border: none; 
-            color: #ccc; 
-            padding: 12px 0; /* Removed side padding */
-            cursor: pointer; 
-            font-size: 0.9rem; 
-            font-weight: 600; 
-            border-radius: 8px; 
-            transition: all 0.2s; 
-            
-            /* Centering */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            white-space: nowrap; /* Prevents text wrapping */
+            flex: 1 1 0px; width: 0; 
+            background: transparent; border: none; color: #ccc; padding: 12px 0; 
+            cursor: pointer; font-size: 0.9rem; font-weight: 600; border-radius: 8px; transition: all 0.2s; 
+            display: flex; justify-content: center; align-items: center; white-space: nowrap;
         }
+        .tab-btn.active { background: rgba(255, 255, 255, 0.15); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+        @media (max-width: 400px) { .tab-btn { font-size: 0.75rem; padding: 10px 0; } .tab-btn:last-child { font-size: 1.1rem; } }
 
-        .tab-btn.active { 
-            background: rgba(255, 255, 255, 0.15); 
-            color: white; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
-            text-shadow: 0 0 5px rgba(255,255,255,0.5); 
-        }
-        
-        /* MOBILE ADJUSTMENTS FOR MENU */
-        @media (max-width: 400px) {
-            .tab-btn {
-                font-size: 0.75rem; /* Smaller text on small phones */
-                padding: 10px 0;
-            }
-            /* Special fix for the Settings icon to align it */
-            .tab-btn:last-child {
-                font-size: 1.1rem; /* Icon slightly bigger */
-            }
-        }
-
-        .content-section { display: none; width: 100%; max-width: 600px; animation: fadeIn 0.3s ease; }
+        .content-section { display: none; width: 100%; max-width: 600px; animation: fadeIn 0.3s ease; padding-bottom: 400px; }
         .content-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -128,12 +89,11 @@
         .level-badge {
             width: 60px; height: 60px; background: #333; border: 2px solid var(--xp-bar);
             border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center;
-            box-shadow: 0 0 10px var(--xp-bar);
-            flex-shrink: 0;
+            box-shadow: 0 0 10px var(--xp-bar); flex-shrink: 0;
         }
         .lvl-num { font-size: 1.4rem; font-weight: bold; color: #fff; line-height: 1; }
         .lvl-label { font-size: 0.6rem; color: var(--xp-bar); text-transform: uppercase; }
-        .xp-container { flex: 1; min-width: 0; /* Fixes flex overflow issues */ }
+        .xp-container { flex: 1; min-width: 0; }
         .rpg-title { font-size: 1.1rem; font-weight: bold; color: #fff; margin-bottom: 5px; letter-spacing: 1px; text-shadow: 0 2px 2px black;}
         .xp-bar-bg { width: 100%; height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid #444; }
         .xp-bar-fill { height: 100%; background: var(--xp-bar); width: 0%; transition: width 0.5s ease; box-shadow: 0 0 10px var(--xp-bar); }
@@ -354,9 +314,9 @@
         <div id="module-nonut">
             <h3 style="color:var(--accent-nn); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">No Nut-chan</h3>
             <div class="waifu-grid">
-                <div class="waifu-card bg-common" onclick="openModal('special.png')"><span id="nn-special-count" class="waifu-count count-special">0</span><img src="special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
-                <div class="waifu-card bg-rare" onclick="openModal('shiny.png')"><span id="nn-shiny-count" class="waifu-count count-shiny">0</span><img src="shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
-                <div class="waifu-card bg-legendary" onclick="openModal('legendary.png')"><span id="nn-legendary-count" class="waifu-count count-legendary">0</span><img src="legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
+                <div class="waifu-card bg-common" id="card-nn-special" onclick="equipWaifu('panic_button.png', 'card-nn-special')"><span id="nn-special-count" class="waifu-count count-special">0</span><img src="special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special (Equip)</div></div></div>
+                <div class="waifu-card bg-rare" id="card-nn-shiny" onclick="equipWaifu('shiny.png', 'card-nn-shiny')"><span id="nn-shiny-count" class="waifu-count count-shiny">0</span><img src="shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny (Equip)</div></div></div>
+                <div class="waifu-card bg-legendary" id="card-nn-legendary" onclick="equipWaifu('legendary.png', 'card-nn-legendary')"><span id="nn-legendary-count" class="waifu-count count-legendary">0</span><img src="legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary (Equip)</div></div></div>
             </div>
             <div class="trade-box">
                 <div class="trade-header">Card Exchange</div>
@@ -374,9 +334,9 @@
         <div id="module-sleep" style="margin-top:40px;">
             <h3 style="color:var(--accent-sleep); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Sleep-chan</h3>
             <div class="waifu-grid">
-                <div class="waifu-card bg-common" onclick="openModal('sleep_special.png')"><span id="sl-special-count" class="waifu-count count-special">0</span><img src="sleep_special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
-                <div class="waifu-card bg-rare" onclick="openModal('sleep_shiny.png')"><span id="sl-shiny-count" class="waifu-count count-shiny">0</span><img src="sleep_shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
-                <div class="waifu-card bg-legendary" onclick="openModal('sleep_legendary.png')"><span id="sl-legendary-count" class="waifu-count count-legendary">0</span><img src="sleep_legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
+                <div class="waifu-card bg-common" id="card-sl-special" onclick="equipWaifu('sleep_special.png', 'card-sl-special')"><span id="sl-special-count" class="waifu-count count-special">0</span><img src="sleep_special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special (Equip)</div></div></div>
+                <div class="waifu-card bg-rare" id="card-sl-shiny" onclick="equipWaifu('sleep_shiny.png', 'card-sl-shiny')"><span id="sl-shiny-count" class="waifu-count count-shiny">0</span><img src="sleep_shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny (Equip)</div></div></div>
+                <div class="waifu-card bg-legendary" id="card-sl-legendary" onclick="equipWaifu('sleep_legendary.png', 'card-sl-legendary')"><span id="sl-legendary-count" class="waifu-count count-legendary">0</span><img src="sleep_legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary (Equip)</div></div></div>
             </div>
             <div class="trade-box">
                 <div class="trade-header">Card Exchange</div>
@@ -495,6 +455,7 @@
         let rewards = { nonut:{special:0,shiny:0,legendary:0,streak:0}, sleep:{special:0,shiny:0,legendary:0,streak:0}, lifetime_legendaries: 0 };
         let rpg = { xp: 0 }; 
         let unlocks = { themes: [], gallery: [] }; 
+        let equipped = { waifu: 'panic_button.png', cardId: null, theme: '' };
         let currentWeek = [], archive = [];
         let currentAudio = null;
         let quoteInterval = null;
@@ -516,12 +477,17 @@
                 unlocks = JSON.parse(localStorage.getItem('wt_unlocks'));
                 if(!unlocks.gallery) unlocks.gallery = []; // Ensure gallery exists
             }
+            if(localStorage.getItem('wt_equipped')) equipped = JSON.parse(localStorage.getItem('wt_equipped'));
             if(localStorage.getItem('wt_week')) currentWeek = JSON.parse(localStorage.getItem('wt_week'));
             else initWeek();
             if(localStorage.getItem('wt_archive')) archive = JSON.parse(localStorage.getItem('wt_archive'));
 
-            // APPLY SAVED THEME
-            applyTheme(config.activeTheme, false);
+            // APPLY SAVED THEME & WAIFU
+            applyTheme(equipped.theme, false);
+            if(config.activeTheme) document.body.className = config.activeTheme;
+            document.getElementById('fabImg').src = equipped.waifu;
+            updateEquipUI();
+
             updateFabState();
             renderLog(); renderRewards(); renderSettingsUI(); renderRPG(); renderStats(); updateThemeUI(); renderGallery();
         }
@@ -537,9 +503,10 @@
             localStorage.setItem('wt_rewards', JSON.stringify(rewards));
             localStorage.setItem('wt_rpg', JSON.stringify(rpg));
             localStorage.setItem('wt_unlocks', JSON.stringify(unlocks));
+            localStorage.setItem('wt_equipped', JSON.stringify(equipped));
         }
 
-        // --- GALLERY LOGIC (V55) ---
+        // --- GALLERY LOGIC ---
         function renderGallery() {
             const container = document.getElementById('gallery-container');
             container.innerHTML = '';
@@ -554,6 +521,25 @@
                 }
                 container.appendChild(div);
             });
+        }
+
+        // --- EQUIP LOGIC ---
+        function equipWaifu(imgSrc, cardId) {
+            let count = 0;
+            if(cardId.includes('nn-special')) count = rewards.nonut.special;
+            if(cardId.includes('nn-shiny')) count = rewards.nonut.shiny;
+            if(cardId.includes('nn-legendary')) count = rewards.nonut.legendary;
+            if(cardId.includes('sl-special')) count = rewards.sleep.special;
+            if(cardId.includes('sl-shiny')) count = rewards.sleep.shiny;
+            if(cardId.includes('sl-legendary')) count = rewards.sleep.legendary;
+
+            if(count > 0) { equipped.waifu = imgSrc; equipped.cardId = cardId; document.getElementById('fabImg').src = imgSrc; save(); updateEquipUI(); alert("Companion Equipped!"); } 
+            else { alert("You need to collect this card first!"); }
+        }
+
+        function updateEquipUI() {
+            document.querySelectorAll('.waifu-card').forEach(c => c.classList.remove('equipped'));
+            if(equipped.cardId) { const el = document.getElementById(equipped.cardId); if(el) el.classList.add('equipped'); }
         }
 
         // --- THEMES ---
@@ -609,11 +595,16 @@
             bubble.style.display = 'block';
 
             if(config.modules.nonut && config.allowedDays.includes(appDay)) {
-                img.src = 'reward_button.png'; 
+                // If default panic is equipped, switch to reward icon temporarily
+                if(equipped.waifu === 'panic_button.png') img.src = 'reward_button.png'; 
+                else img.src = equipped.waifu; // Keep equipped waifu
+                
                 btn.onclick = triggerReward;
                 startQuoteRotation(rewardLines);
             } else {
-                img.src = 'panic_button.png'; 
+                if(equipped.waifu === 'reward_button.png') img.src = 'panic_button.png'; 
+                else img.src = equipped.waifu; // Keep equipped waifu
+                
                 btn.onclick = triggerPanic;
                 startQuoteRotation(panicLines);
             }
@@ -626,12 +617,38 @@
             if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
             currentAudio = new Audio(file);
             const p = currentAudio.play();
-            if (p !== undefined) { p.then(_ => { currentAudio.onended = function() { document.getElementById(modalId).style.display = 'none'; }; }).catch(error => { setTimeout(() => { document.getElementById(modalId).style.display = 'none'; }, 3000); }); }
+            if (p !== undefined) { p.then(_ => { currentAudio.onended = function() { document.getElementById(modalId).style.display = 'none'; }; }).catch(error => { setTimeout(() => { document.getElementById(modalId).style.display = 'none'; }, 1500); }); }
         }
         function stopAudio() { if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; } }
 
         // --- TRIGGERS ---
-        function triggerPanic() { document.getElementById('panicModal').style.display = 'flex'; playAudioWithFallback(audioFiles, 'panicModal'); }
+        function triggerPanic() { 
+            // SMART AUDIO LOGIC
+            let daysLeft = 0;
+            const today = new Date().getDay();
+            const appDay = today === 0 ? 6 : today - 1;
+            for(let i = 1; i <= 7; i++) {
+                const next = (appDay + i) % 7;
+                if(config.allowedDays.includes(next)) {
+                    daysLeft = i;
+                    break;
+                }
+            }
+            let fileToPlay = "";
+            if(daysLeft === 1) fileToPlay = `panic_1day_${Math.floor(Math.random() * 13) + 1}.mp3`;
+            else if (daysLeft === 2) fileToPlay = `panic_2days_${Math.floor(Math.random() * 8) + 1}.mp3`;
+            else if (daysLeft === 3) fileToPlay = `panic_3days_${Math.floor(Math.random() * 7) + 1}.mp3`;
+            else fileToPlay = `panic_long_${Math.floor(Math.random() * 4) + 1}.mp3`;
+
+            document.getElementById('panicModal').style.display = 'flex'; 
+            if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+            currentAudio = new Audio(fileToPlay);
+            const p = currentAudio.play();
+            if (p !== undefined) { 
+                p.then(_ => { currentAudio.onended = function() { document.getElementById('panicModal').style.display = 'none'; }; })
+                 .catch(error => { console.log(error); setTimeout(() => { document.getElementById('panicModal').style.display = 'none'; }, 1500); }); 
+            }
+        }
         function stopPanic() { document.getElementById('panicModal').style.display = 'none'; stopAudio(); }
         function triggerSuccess() { document.getElementById('successModal').style.display = 'flex'; triggerFireworks(window.innerWidth/2, window.innerHeight/2); playAudioWithFallback(successAudioFiles, 'successModal'); }
         function stopSuccess() { document.getElementById('successModal').style.display = 'none'; stopAudio(); }
@@ -672,6 +689,8 @@
             }
             document.getElementById('rewardImg').src = selectedImg;
             document.getElementById('rewardModal').style.display = 'flex';
+            // Add audio to reward modal
+            playAudioWithFallback(successAudioFiles, 'rewardModal');
             triggerFireworks(window.innerWidth/2, window.innerHeight/2);
         }
         function stopReward() { document.getElementById('rewardModal').style.display = 'none'; document.getElementById('waifuBubble').style.display = 'block'; }
