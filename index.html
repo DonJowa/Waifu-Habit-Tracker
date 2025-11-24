@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Waifu Tracker: V56 Text Update</title>
+    <title>Waifu Tracker: V58 Perfect Menu</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -55,15 +55,61 @@
             transition: background-image 0.5s ease;
         }
 
-        /* TABS */
+        /* --- UPDATED TABS (Perfect Fit) --- */
         .tabs {
-            display: flex; width: 100%; max-width: 600px;
-            background: rgba(30, 30, 30, 0.8); backdrop-filter: blur(10px);
-            border-radius: 12px; padding: 5px; margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            display: flex; 
+            width: 100%; 
+            max-width: 600px;
+            background: rgba(30, 30, 30, 0.8); 
+            backdrop-filter: blur(10px);
+            border-radius: 12px; 
+            padding: 4px; 
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
+            border: 1px solid rgba(255,255,255,0.1);
+            box-sizing: border-box; /* Important so padding doesn't add width */
         }
-        .tab-btn { flex: 1; background: transparent; border: none; color: #ccc; padding: 12px 0; cursor: pointer; font-size: 0.9rem; font-weight: 600; border-radius: 8px; transition: all 0.2s; }
-        .tab-btn.active { background: rgba(255, 255, 255, 0.15); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+
+        .tab-btn { 
+            /* Forces all buttons to have equal width, regardless of text length */
+            flex: 1 1 0px; 
+            width: 0; 
+            
+            background: transparent; 
+            border: none; 
+            color: #ccc; 
+            padding: 12px 0; /* Removed side padding */
+            cursor: pointer; 
+            font-size: 0.9rem; 
+            font-weight: 600; 
+            border-radius: 8px; 
+            transition: all 0.2s; 
+            
+            /* Centering */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            white-space: nowrap; /* Prevents text wrapping */
+        }
+
+        .tab-btn.active { 
+            background: rgba(255, 255, 255, 0.15); 
+            color: white; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+            text-shadow: 0 0 5px rgba(255,255,255,0.5); 
+        }
+        
+        /* MOBILE ADJUSTMENTS FOR MENU */
+        @media (max-width: 400px) {
+            .tab-btn {
+                font-size: 0.75rem; /* Smaller text on small phones */
+                padding: 10px 0;
+            }
+            /* Special fix for the Settings icon to align it */
+            .tab-btn:last-child {
+                font-size: 1.1rem; /* Icon slightly bigger */
+            }
+        }
 
         .content-section { display: none; width: 100%; max-width: 600px; animation: fadeIn 0.3s ease; }
         .content-section.active { display: block; }
@@ -77,15 +123,17 @@
             border-radius: 12px; padding: 15px; margin-bottom: 20px;
             display: flex; align-items: center; gap: 15px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            box-sizing: border-box;
         }
         .level-badge {
             width: 60px; height: 60px; background: #333; border: 2px solid var(--xp-bar);
             border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center;
             box-shadow: 0 0 10px var(--xp-bar);
+            flex-shrink: 0;
         }
         .lvl-num { font-size: 1.4rem; font-weight: bold; color: #fff; line-height: 1; }
         .lvl-label { font-size: 0.6rem; color: var(--xp-bar); text-transform: uppercase; }
-        .xp-container { flex: 1; }
+        .xp-container { flex: 1; min-width: 0; /* Fixes flex overflow issues */ }
         .rpg-title { font-size: 1.1rem; font-weight: bold; color: #fff; margin-bottom: 5px; letter-spacing: 1px; text-shadow: 0 2px 2px black;}
         .xp-bar-bg { width: 100%; height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid #444; }
         .xp-bar-fill { height: 100%; background: var(--xp-bar); width: 0%; transition: width 0.5s ease; box-shadow: 0 0 10px var(--xp-bar); }
@@ -266,7 +314,10 @@
     <canvas id="fireworksCanvas"></canvas>
     
     <div id="waifuBubble" class="speech-bubble">Good job! Today is your reward day!<br>Wanna do it with me?</div>
-    <div id="globalPanicBtn" onclick="triggerPanic()"><img id="fabImg" src="panic_button.png" alt="Action"></div>
+
+    <div id="globalPanicBtn" onclick="triggerPanic()">
+        <img id="fabImg" src="panic_button.png" alt="Action">
+    </div>
 
     <!-- MODALS -->
     <div id="imgModal" class="modal" onclick="this.style.display='none'"><img id="modalImg" src=""></div>
@@ -303,9 +354,9 @@
         <div id="module-nonut">
             <h3 style="color:var(--accent-nn); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">No Nut-chan</h3>
             <div class="waifu-grid">
-                <div class="waifu-card bg-common"><span id="nn-special-count" class="waifu-count count-special">0</span><img src="special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
-                <div class="waifu-card bg-rare"><span id="nn-shiny-count" class="waifu-count count-shiny">0</span><img src="shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
-                <div class="waifu-card bg-legendary"><span id="nn-legendary-count" class="waifu-count count-legendary">0</span><img src="legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
+                <div class="waifu-card bg-common" onclick="openModal('special.png')"><span id="nn-special-count" class="waifu-count count-special">0</span><img src="special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
+                <div class="waifu-card bg-rare" onclick="openModal('shiny.png')"><span id="nn-shiny-count" class="waifu-count count-shiny">0</span><img src="shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
+                <div class="waifu-card bg-legendary" onclick="openModal('legendary.png')"><span id="nn-legendary-count" class="waifu-count count-legendary">0</span><img src="legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
             </div>
             <div class="trade-box">
                 <div class="trade-header">Card Exchange</div>
@@ -323,9 +374,9 @@
         <div id="module-sleep" style="margin-top:40px;">
             <h3 style="color:var(--accent-sleep); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Sleep-chan</h3>
             <div class="waifu-grid">
-                <div class="waifu-card bg-common"><span id="sl-special-count" class="waifu-count count-special">0</span><img src="sleep_special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
-                <div class="waifu-card bg-rare"><span id="sl-shiny-count" class="waifu-count count-shiny">0</span><img src="sleep_shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
-                <div class="waifu-card bg-legendary"><span id="sl-legendary-count" class="waifu-count count-legendary">0</span><img src="sleep_legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
+                <div class="waifu-card bg-common" onclick="openModal('sleep_special.png')"><span id="sl-special-count" class="waifu-count count-special">0</span><img src="sleep_special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
+                <div class="waifu-card bg-rare" onclick="openModal('sleep_shiny.png')"><span id="sl-shiny-count" class="waifu-count count-shiny">0</span><img src="sleep_shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
+                <div class="waifu-card bg-legendary" onclick="openModal('sleep_legendary.png')"><span id="sl-legendary-count" class="waifu-count count-legendary">0</span><img src="sleep_legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
             </div>
             <div class="trade-box">
                 <div class="trade-header">Card Exchange</div>
@@ -430,21 +481,7 @@
             "Stay strong! I know it's hard, but I believe in you.",
             "Just breathe. The urge will pass. You are stronger than your impulses.",
             "Save that energy for your goals (or for our reward day). Don't waste it!",
-            "I'm right here with you. Let's get through today together, okay?",
-            "Hands off! I'm saving that load for myself. You want to fill me up on reward day, don't you?",
-            "Save it! The more you hold back now, the harder I'll make you cum when it's finally time.",
-            "Don't waste your 'Ammo' on a speedrun! Save it for the co-op session with me...",
-            "If you break the streak now, we can't have fun later. And I was planning to let you do anything to me...",
-            "Think about how good my mouth will feel if you just wait a few more days... Stay strong for me!",
-            "Close your eyes. Imagine what I'm going to do to you on our free day. Hold onto that thought, not your d*ck!",
-            "I'm getting wet just thinking about how much energy you're saving for me. Don't ruin it now!",
-            "Pause. Breathe. Reset. The urge is just a temporary glitch. Let it pass.",
-            "Observe the urge like a cloud passing in the sky. You don't have to chase it. Just watch it float away.",
-            "Close your eyes. Take a deep breath. You are not your impulses. You are the one observing them.",
-            "Urges are like waves. They rise, they peak, and then they crash. Surf the wave, don't drown in it.",
-            "Stop. Drop your shoulders. Unclench your jaw. Center yourself. You are in control.",
-            "This moment of discomfort is the sound of your willpower leveling up. embrace it.",
-            "Be the mountain, not the wind. Let the storm blow past you. You remain unmoved."
+            "I'm right here with you. Let's get through today together, okay?"
         ];
 
         let config = { 
@@ -477,7 +514,7 @@
             if(localStorage.getItem('wt_rpg')) rpg = JSON.parse(localStorage.getItem('wt_rpg'));
             if(localStorage.getItem('wt_unlocks')) {
                 unlocks = JSON.parse(localStorage.getItem('wt_unlocks'));
-                if(!unlocks.gallery) unlocks.gallery = [];
+                if(!unlocks.gallery) unlocks.gallery = []; // Ensure gallery exists
             }
             if(localStorage.getItem('wt_week')) currentWeek = JSON.parse(localStorage.getItem('wt_week'));
             else initWeek();
@@ -502,7 +539,7 @@
             localStorage.setItem('wt_unlocks', JSON.stringify(unlocks));
         }
 
-        // --- GALLERY LOGIC ---
+        // --- GALLERY LOGIC (V55) ---
         function renderGallery() {
             const container = document.getElementById('gallery-container');
             container.innerHTML = '';
@@ -794,9 +831,4 @@
         function openModal(src){ document.getElementById('modalImg').src=src; document.getElementById('imgModal').style.display='flex'; }
         function exportData() { const data = { config, rewards, rpg, currentWeek, archive, exportDate: new Date().toISOString() }; const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); const a = document.createElement('a'); a.href = dataStr; a.download = "waifu_tracker_backup.json"; a.click(); }
         function importData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const json = JSON.parse(e.target.result); if(json.config) localStorage.setItem('wt_config', JSON.stringify(json.config)); if(json.rewards) localStorage.setItem('wt_rewards', JSON.stringify(json.rewards)); if(json.rpg) localStorage.setItem('wt_rpg', JSON.stringify(json.rpg)); if(json.currentWeek) localStorage.setItem('wt_week', JSON.stringify(json.currentWeek)); if(json.archive) localStorage.setItem('wt_archive', JSON.stringify(json.archive)); if(json.unlocks) localStorage.setItem('wt_unlocks', JSON.stringify(json.unlocks)); if(json.equipped) localStorage.setItem('wt_equipped', JSON.stringify(json.equipped)); alert("Data imported!"); location.reload(); } catch(err) { alert("Import error."); } }; reader.readAsText(file); }
-        function triggerFireworks(x, y) { const c=document.getElementById('fireworksCanvas'), cx=c.getContext('2d'); c.width=window.innerWidth; c.height=window.innerHeight; let startX=x||c.width/2; let startY=y||c.height/2; let p=[]; for(let i=0;i<60;i++) p.push({x:startX, y:startY, vx:(Math.random()-.5)*12, vy:(Math.random()-.5)*12, c:`hsl(${Math.random()*360},100%,50%)`, a:1}); function anim(){ cx.clearRect(0,0,c.width,c.height); p.forEach((k,i)=>{k.x+=k.vx;k.y+=k.vy;k.vy+=0.1;k.a-=0.02;cx.globalAlpha=k.a;cx.fillStyle=k.c;cx.fillRect(k.x,k.y,4,4);if(k.a<=0)p.splice(i,1)}); if(p.length)requestAnimationFrame(anim); } anim(); }
-
-        init();
-    </script>
-</body>
-</html>
+        function triggerFireworks(x, y) { const c=document.getElementById('fireworksCanvas'), cx=c.getContext('2d'); c.width=window.innerWidth; c.height=window.innerHeight; let startX=x||c.width/2; let startY=y||c.height/2; let p=[]; for(let i=0;i<60;i++) p.push({x:startX, y:startY, vx:(Math.random()-.5)*12, vy:(Math.random()-.5)*12, c:`hsl(${Math.random()*360},100%,50%)`, a:1}); function anim(){ cx.clearRect(0,0,c.width,c.height); p.forEach((k,i)=>{k.x+=k.vx;k.y+=k.vy;k.vy+=0.1;k.a-=0.02;cx.globalAlpha=k.a;cx.fillStyle=k.c;cx.fillRect(k.x,k.y,4,4);if(k.a<=0)p.splice(i,1)}); if(p.length)requestAnimationFrame(anim); } anim(); 
