@@ -611,4 +611,192 @@
             if (saved.date === today && saved.img) {
                 selectedImg = saved.img;
             } else {
-                // Determine pool 
+                // Determine pool size
+                // 1-10 (Index 0-9) are Standard
+                // 11-15 (Index 10-14) are Elite (Requires 1 Legendary)
+                let pool = rewardImages.slice(0, 10);
+                
+                if (rewards.lifetime_legendaries >= 1) {
+                    pool = rewardImages; // All 15
+                }
+
+                let lastImg = saved.img;
+                if(pool.length > 1 && lastImg) { pool = pool.filter(img => img !== lastImg); }
+                selectedImg = pool[Math.floor(Math.random() * pool.length)];
+                
+                localStorage.setItem('wt_daily_reward', JSON.stringify({ date: today, img: selectedImg }));
+                
+                // UNLOCK LOGIC
+                if(!unlocks.gallery.includes(selectedImg)) {
+                    unlocks.gallery.push(selectedImg);
+                    save();
+                    renderGallery();
+                }
+            }
+            document.getElementById('rewardImg').src = selectedImg;
+            document.getElementById('rewardModal').style.display = 'flex';
+            triggerFireworks(window.innerWidth/2, window.innerHeight/2);
+        }
+        function stopReward() { document.getElementById('rewardModal').style.display = 'none'; document.getElementById('waifuBubble').style.display = 'block'; }
+
+        function checkDayCompletion(i) {
+            const d = currentWeek[i];
+            let sleepOk = true; if(config.modules.sleep) sleepOk = d.sleep !== null && (d.exempt || d.sleep <= config.targetWakeTime);
+            let nutOk = true; if(config.modules.nonut) nutOk = d.allowed ? (d.kept !== null) : (d.kept === true);
+            if (sleepOk && nutOk) triggerSuccess();
+        }
+
+        // --- TRADING & RPG ---
+        function trade(category, type, cost) { let b = rewards[category]; if (b[type] >= cost) { if(confirm(`Trade ${cost} ${type} for 1 Legendary?`)) { b[type] -= cost; b.legendary++; rewards.lifetime_legendaries++; save(); renderRewards(); updateThemeUI(); triggerFireworks(window.innerWidth/2, window.innerHeight/2); alert("Trade Successful!"); } } else { alert(`Not enough ${type}!`); } }
+        function getLevelData(totalXP) { let l=1, c=300, r=totalXP; while(r>=c){r-=c; l++; c+=20;} return {level:l, currentXP:r, nextLevelCost:c}; }
+        function addXP(amount) { const oldD = getLevelData(rpg.xp); rpg.xp += amount; const newD = getLevelData(rpg.xp); if (newD.level > oldD.level) { if(config.modules.nonut) rewards.nonut.special++; if(config.modules.sleep) rewards.sleep.special++; save(); alert(`LEVEL UP! Level ${newD.level}!\nBonus: +1 Special(s)!`); triggerFireworks(window.innerWidth/2, window.innerHeight/2); } save(); renderRPG(); }
+        function renderRPG() { const d = getLevelData(rpg.xp); document.getElementById('rpg-level').innerText = d.level; document.getElementById('rpg-current-xp').innerText = d.currentXP; document.getElementById('rpg-next-xp').innerText = d.nextLevelCost; document.getElementById('xp-bar').style.width = Math.min((d.currentXP/d.nextLevelCost)*100,100)+'%'; let ti=Math.floor((d.level-1)/5); if(ti>=titles.length) ti=titles.length-1; document.getElementById('rpg-title').innerText = titles[ti]; }
+
+        // --- RENDER LOGIC ---
+        function renderLog() {
+            const container = document.getElementById('week-container'); container.innerHTML = '';
+            let jsDay = new Date().getDay(); let todayIdx = jsDay === 0 ? 6 : jsDay - 1; 
+
+            currentWeek.forEach((d, i) => {
+                const card = document.createElement('div');
+                let classes = 'day-card';
+                if(config.modules.nonut && d.allowed) classes += ' allowed-day'; 
+                if(config.modules.sleep && d.exempt) classes += ' exempt-day'; 
+                if(i === todayIdx) classes += ' is-today';
+                if((!config.modules.sleep || d.sleep !== null) && (!config.modules.nonut || d.kept !== null)) classes += ' completed';
+                card.className = classes;
+                let badges = '';
+                if(config.modules.nonut && d.allowed) badges += '<span class="badge badge-allowed">Allowed</span>';
+                if(config.modules.sleep && d.exempt) badges += '<span class="badge badge-exempt">Sleep In</span>';
+                let content = `<div class="card-header"><span class="day-title">${d.day}</span><div class="header-right"><div class="badges">${badges}</div></div></div>`;
+                if(config.modules.sleep) {
+                    if (d.sleep !== null) {
+                        const sleepText = d.sleep <= config.targetWakeTime || d.exempt ? '✅ On Time' : '❌ Overslept';
+                        content += `<div class="summary-view"><div class="summary-text"><b>💤 Sleep:</b> ${findLabel(d.sleep)} (${sleepText})</div><button class="edit-btn" onclick="resetDay(${i}, 'sleep')">Edit</button></div>`;
+                    } else {
+                        let sleepBtns = ''; config.wakeTimes.forEach(t => { sleepBtns += `<button class="sleep-btn ${d.sleep===t.v?'selected':''}" onclick="setSleep(${i},${t.v})">${t.l}</button>`; });
+                        content += `<div style="margin-bottom:5px;font-size:0.9rem;">💤 Woke up:</div><div class="btn-grid">${sleepBtns}</div>`;
+                    }
+                }
+                if(config.modules.nonut) {
+                    if (d.kept !== null) {
+                        let nutText = d.allowed ? (d.kept ? '✅ Indulged' : '⏸️ Skipped') : (d.kept ? '✅ Success' : '❌ Failed');
+                        content += `<div class="summary-view"><div class="summary-text"><b>🚫 Status:</b> ${nutText}</div><button class="edit-btn" onclick="resetDay(${i}, 'kept')">Edit</button></div>`;
+                    } else {
+                        let nutBtns = d.allowed ? `<button class="fap-btn allowed-action" onclick="setKept(${i},true)">Indulge</button><button class="fap-btn allowed-skip" onclick="setKept(${i},false)">Skip</button>` : `<button class="fap-btn success-btn" onclick="setKept(${i},true)">Success</button><button class="fap-btn fail-btn" onclick="setKept(${i},false)">Fail</button>`;
+                        content += `<div style="margin-bottom:5px;font-size:0.9rem;">🚫 Status:</div><div class="btn-grid" style="grid-template-columns:1fr 1fr;">${nutBtns}</div>`;
+                    }
+                }
+                card.innerHTML = content; container.appendChild(card);
+            });
+        }
+
+        function findLabel(val) { const t = config.wakeTimes.find(x => x.v === val); return t ? t.l : val; }
+        function setSleep(i, v) { if (currentWeek[i].sleep === null) { if (currentWeek[i].exempt || v <= config.targetWakeTime) addXP(5); } currentWeek[i].sleep = v; save(); renderLog(); checkDayCompletion(i); }
+        function setKept(i, v) { if(currentWeek[i].kept === null) { if(!currentWeek[i].allowed && v === true) addXP(10); else if(currentWeek[i].allowed) addXP(5); } currentWeek[i].kept = v; save(); renderLog(); checkDayCompletion(i); }
+        function resetDay(i, type) { if(type === 'sleep') currentWeek[i].sleep = null; if(type === 'kept') currentWeek[i].kept = null; save(); renderLog(); }
+
+        function archiveWeek() {
+            let incomplete = false;
+            for(let d of currentWeek) { if(config.modules.sleep && d.sleep === null) incomplete = true; if(config.modules.nonut && d.kept === null) incomplete = true; }
+            if(incomplete) { if(!confirm("WARNING: Some active days are incomplete. Proceed?")) return; } else { if(!confirm("Archive week?")) return; }
+            let itemsWon = [], failReasons = [];
+            let gainedXP = 0;
+
+            if(config.modules.nonut) {
+                const nnReq = currentWeek.filter(d => !d.allowed);
+                if(nnReq.length > 0 && nnReq.every(d => d.kept === true)) {
+                    rewards.nonut.streak++; rewards.nonut.special++; 
+                    addXP(50); gainedXP += 50;
+                    itemsWon.push("💖 1x Special No Nut-chan (+50 XP)");
+                    if(rewards.nonut.streak > 0 && rewards.nonut.streak % 4 === 0) { rewards.nonut.shiny++; addXP(100); gainedXP += 100; itemsWon.push("✨ 1x Shiny NN (+100 XP)"); }
+                    if(rewards.nonut.streak > 0 && rewards.nonut.streak % 8 === 0) { rewards.nonut.legendary++; rewards.lifetime_legendaries++; addXP(200); gainedXP += 200; itemsWon.push("👑 1x Legendary NN (+200 XP)"); }
+                } else { rewards.nonut.streak = 0; failReasons.push("No-Nut Failed"); }
+            }
+            if(config.modules.sleep) {
+                const slReq = currentWeek.filter(d => !d.exempt);
+                if(slReq.length > 0 && slReq.every(d => d.sleep !== null && d.sleep <= config.targetWakeTime)) {
+                    rewards.sleep.streak++; rewards.sleep.special++; 
+                    addXP(50); gainedXP += 50;
+                    itemsWon.push("💤 1x Special Sleep-chan (+50 XP)");
+                    if(rewards.sleep.streak > 0 && rewards.sleep.streak % 4 === 0) { rewards.sleep.shiny++; addXP(100); gainedXP += 100; itemsWon.push("✨ 1x Shiny Sleep (+100 XP)"); }
+                    if(rewards.sleep.streak > 0 && rewards.sleep.streak % 8 === 0) { rewards.sleep.legendary++; rewards.lifetime_legendaries++; addXP(200); gainedXP += 200; itemsWon.push("👑 1x Legendary Sleep (+200 XP)"); }
+                } else { rewards.sleep.streak = 0; failReasons.push("Sleep Failed"); }
+            }
+            save(); 
+            if(itemsWon.length > 0) {
+                alert("CONGRATS! You earned:\n" + itemsWon.join("\n"));
+                triggerWeeklySuccess();
+            } else { 
+                alert("Better luck next week.\n" + failReasons.join("\n")); 
+                archive.push({date:new Date(), data:[...currentWeek]}); initWeek(); renderLog(); renderRewards(); renderStats(); 
+            }
+        }
+
+        function renderRewards() {
+            const nnDiv = document.getElementById('module-nonut');
+            const slDiv = document.getElementById('module-sleep');
+            if(config.modules.nonut) {
+                nnDiv.style.display = 'block';
+                document.getElementById('nn-special-count').innerText = rewards.nonut.special;
+                document.getElementById('nn-shiny-count').innerText = rewards.nonut.shiny;
+                document.getElementById('nn-legendary-count').innerText = rewards.nonut.legendary;
+                document.getElementById('nn-streak').innerText = rewards.nonut.streak;
+                updateBar('nn', rewards.nonut.streak);
+                let t=0; archive.forEach(w=>{const r=w.data.filter(d=>!d.allowed); if(r.length>0 && r.every(d=>d.kept===true)) t++;}); document.getElementById('nn-total').innerText = t;
+            } else { nnDiv.style.display = 'none'; }
+            if(config.modules.sleep) {
+                slDiv.style.display = 'block';
+                document.getElementById('sl-special-count').innerText = rewards.sleep.special;
+                document.getElementById('sl-shiny-count').innerText = rewards.sleep.shiny;
+                document.getElementById('sl-legendary-count').innerText = rewards.sleep.legendary;
+                document.getElementById('sl-streak').innerText = rewards.sleep.streak;
+                updateBar('sl', rewards.sleep.streak);
+                let t=0; archive.forEach(w=>{const r=w.data.filter(d=>!d.exempt); if(r.length>0 && r.every(d=>d.sleep!==null && d.sleep<=config.targetWakeTime)) t++;}); document.getElementById('sl-total').innerText = t;
+            } else { slDiv.style.display = 'none'; }
+            updateThemeUI();
+        }
+
+        function updateBar(prefix, streak) { let cyclePos = streak % 8; if (streak > 0 && cyclePos === 0) cyclePos = 8; document.getElementById(`${prefix}-bar`).style.width = (cyclePos / 8) * 100 + '%'; let msg = cyclePos < 4 ? `Next Shiny: ${4 - cyclePos}w` : (cyclePos < 8 ? `Next Legendary: ${8 - cyclePos}w` : "Level Up! New cycle next week."); document.getElementById(`${prefix}-next-text`).innerText = msg; }
+        
+        function renderStats() { 
+            document.getElementById('stats-nonut').style.display = config.modules.nonut ? 'block' : 'none';
+            document.getElementById('stats-sleep').style.display = config.modules.sleep ? 'block' : 'none';
+            if(config.modules.sleep) {
+                const hm = document.getElementById('sleep-heatmap'); hm.innerHTML = ''; let all = []; archive.slice(-4).forEach(w => all.push(...w.data)); all.push(...currentWeek); all.slice(-28).forEach(d => { const el = document.createElement('div'); el.className = 'heatmap-day'; el.innerText = d.day.substring(0,1); if(d.sleep===null) el.style.background='#222'; else if(d.exempt) el.className+=' neutral'; else if(d.sleep<=config.targetWakeTime) el.className+=' success'; else el.className+=' fail'; hm.appendChild(el); }); 
+                const ctx = document.getElementById('sleepChart').getContext('2d'); const pts = all.filter(d=>d.sleep!==null).slice(-30); if(window.sleepChartInstance) window.sleepChartInstance.destroy(); window.sleepChartInstance = new Chart(ctx, { type:'line', data:{ labels:pts.map(d=>d.day.substring(0,3)), datasets:[{ label:'Time', data:pts.map(d=>d.sleep), borderColor:'#7c4dff', tension:0.3 }] }, options:{ scales:{y:{min:6,max:13}}, plugins:{legend:{display:false}} } }); 
+            }
+            if(config.modules.nonut) {
+                let nnWins = 0, nnLosses = 0; archive.forEach(w => { const req = w.data.filter(d => !d.allowed); if(req.length === 0) return; const isWin = req.every(d => d.kept === true); if(isWin) nnWins++; else nnLosses++; }); 
+                const ctxF = document.getElementById('fapChart').getContext('2d'); if(window.fapChartInstance) window.fapChartInstance.destroy(); window.fapChartInstance = new Chart(ctxF, { type: 'doughnut', data: { labels: ['Success', 'Fail'], datasets: [{ data: [nnWins, nnLosses], backgroundColor: ['#00c853', '#d50000'], borderWidth: 0 }] }, options: { plugins: { legend: { position: 'bottom', labels: { color: '#ccc' } } } } }); 
+            }
+        }
+
+        function renderSettingsUI() {
+            document.getElementById('toggle-nonut').checked = config.modules.nonut;
+            document.getElementById('toggle-sleep').checked = config.modules.sleep;
+            const sel = document.getElementById('target-time-select'); sel.innerHTML = ''; config.wakeTimes.forEach(t => { sel.innerHTML += `<option value="${t.v}" ${config.targetWakeTime==t.v?'selected':''}>${t.l}</option>`; }); 
+            const makeChecks = (id, src, all) => { const c = document.getElementById(id); c.innerHTML=''; all.forEach((d,i)=>{ c.innerHTML+=`<label><input type="checkbox" value="${i}" ${src.includes(i)?'checked':''}> ${d}</label>`; }); }; makeChecks('days-list', config.allowedDays, days); makeChecks('exempt-list', config.sleepExemptDays, days);
+        }
+
+        function saveSettings() {
+            config.modules.nonut = document.getElementById('toggle-nonut').checked;
+            config.modules.sleep = document.getElementById('toggle-sleep').checked;
+            config.targetWakeTime = parseFloat(document.getElementById('target-time-select').value);
+            const getVals = (id) => Array.from(document.querySelectorAll(`#${id} input:checked`)).map(cb=>parseInt(cb.value));
+            config.allowedDays = getVals('days-list'); config.sleepExemptDays = getVals('exempt-list');
+            currentWeek.forEach((d, i) => { d.allowed = config.allowedDays.includes(i); d.exempt = config.sleepExemptDays.includes(i); });
+            save(); renderLog(); renderRewards(); renderStats(); updateFabState(); alert("Settings saved!");
+        }
+
+        function resetData(){ if(confirm("WARNING: All data will be deleted.")) { localStorage.clear(); location.reload(); } }
+        function switchTab(id) { document.querySelectorAll('.content-section').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.classList.add('active'); if(id==='stats') renderStats(); if(id==='gallery') renderGallery(); updateFabState(); }
+        function openModal(src){ document.getElementById('modalImg').src=src; document.getElementById('imgModal').style.display='flex'; }
+        function exportData() { const data = { config, rewards, rpg, currentWeek, archive, exportDate: new Date().toISOString() }; const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); const a = document.createElement('a'); a.href = dataStr; a.download = "waifu_tracker_backup.json"; a.click(); }
+        function importData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const json = JSON.parse(e.target.result); if(json.config) localStorage.setItem('wt_config', JSON.stringify(json.config)); if(json.rewards) localStorage.setItem('wt_rewards', JSON.stringify(json.rewards)); if(json.rpg) localStorage.setItem('wt_rpg', JSON.stringify(json.rpg)); if(json.currentWeek) localStorage.setItem('wt_week', JSON.stringify(json.currentWeek)); if(json.archive) localStorage.setItem('wt_archive', JSON.stringify(json.archive)); if(json.unlocks) localStorage.setItem('wt_unlocks', JSON.stringify(json.unlocks)); if(json.equipped) localStorage.setItem('wt_equipped', JSON.stringify(json.equipped)); alert("Data imported!"); location.reload(); } catch(err) { alert("Import error."); } }; reader.readAsText(file); }
+        function triggerFireworks(x, y) { const c=document.getElementById('fireworksCanvas'), cx=c.getContext('2d'); c.width=window.innerWidth; c.height=window.innerHeight; let startX=x||c.width/2; let startY=y||c.height/2; let p=[]; for(let i=0;i<60;i++) p.push({x:startX, y:startY, vx:(Math.random()-.5)*12, vy:(Math.random()-.5)*12, c:`hsl(${Math.random()*360},100%,50%)`, a:1}); function anim(){ cx.clearRect(0,0,c.width,c.height); p.forEach((k,i)=>{k.x+=k.vx;k.y+=k.vy;k.vy+=0.1;k.a-=0.02;cx.globalAlpha=k.a;cx.fillStyle=k.c;cx.fillRect(k.x,k.y,4,4);if(k.a<=0)p.splice(i,1)}); if(p.length)requestAnimationFrame(anim); } anim(); }
+
+        init();
+    </script>
+</body>
+</html>
