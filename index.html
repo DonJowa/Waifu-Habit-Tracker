@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Waifu Tracker: V29 Fix Layout</title>
-    <link rel="icon" type="image/png" href="icon.png">
-<link rel="apple-touch-icon" href="icon.png">
+    <title>Waifu Tracker: V37 Clearer UI</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -14,15 +12,15 @@
             --card-bg: #1e1e1e;
             --text-color: #e0e0e0;
             --accent-nn: #e91e63;
-            --accent-sleep: #7c4dff;
-            --success: #00c853;
+            --accent-sleep: #7c4dff; /* Sleep color */
+            --success: #00c853;      /* Allowed color */
             --fail: #d50000;
             --neutral: #0277bd;
             --btn-inactive: #333;
             --gold: #ffd700;
             --legendary: #d500f9;
-            --silver: #e0e0e0;
             --xp-bar: #00e5ff;
+            --panic: #ff1744;
         }
 
         body {
@@ -30,6 +28,7 @@
             color: var(--text-color);
             margin: 0;
             padding: 15px;
+            padding-bottom: 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -73,36 +72,66 @@
         }
         .lvl-num { font-size: 1.4rem; font-weight: bold; color: #fff; line-height: 1; }
         .lvl-label { font-size: 0.6rem; color: var(--xp-bar); text-transform: uppercase; }
-        
         .xp-container { flex: 1; }
         .rpg-title { font-size: 1.1rem; font-weight: bold; color: #fff; margin-bottom: 5px; letter-spacing: 1px; text-shadow: 0 2px 2px black;}
         .xp-bar-bg { width: 100%; height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid #444; }
         .xp-bar-fill { height: 100%; background: var(--xp-bar); width: 0%; transition: width 0.5s ease; box-shadow: 0 0 10px var(--xp-bar); }
         .xp-text { font-size: 0.8rem; color: #aaa; margin-top: 3px; text-align: right; }
 
-        /* DAY CARD */
+        /* DAY CARD - NY DESIGN MED GRADIENT BORDER */
         .day-card {
             background: rgba(30, 30, 30, 0.9); backdrop-filter: blur(5px);
-            padding: 20px; margin-bottom: 15px; border-radius: 16px;
-            border-left: 6px solid var(--btn-inactive); position: relative;
+            padding: 20px; padding-left: 24px; /* Mer plats för randen */
+            margin-bottom: 15px; border-radius: 16px;
+            position: relative; overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.05);
         }
-        .day-card.is-today { border: 2px solid var(--accent-sleep); border-left-width: 6px; box-shadow: 0 0 20px rgba(124, 77, 255, 0.3); }
+        
+        /* The Colored Strip on the Left */
+        .day-card::after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0; left: 0;
+            width: 8px;
+            background: var(--btn-inactive); /* Default gray */
+        }
+        
+        /* Grön för Allowed */
+        .day-card.allowed-day::after { background: var(--success); }
+        /* Lila för Sleep In */
+        .day-card.exempt-day::after { background: var(--accent-sleep); }
+        /* GRADIENT för Båda! */
+        .day-card.allowed-day.exempt-day::after { 
+            background: linear-gradient(to bottom, var(--success), var(--accent-sleep)); 
+        }
+
+        .day-card.is-today { border: 2px solid var(--accent-sleep); box-shadow: 0 0 20px rgba(124, 77, 255, 0.3); }
         .day-card.completed { opacity: 0.9; }
-        .day-card.allowed-day { background: rgba(22, 38, 27, 0.9); border-left-color: #00e676; }
-        .day-card.exempt-day { background: rgba(31, 26, 46, 0.9); }
 
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .day-title { font-size: 1.2rem; font-weight: bold; }
         .header-right { display: flex; align-items: center; gap: 8px; }
+        
+        /* PANIC BUTTON */
+        #globalPanicBtn {
+            position: fixed; bottom: 25px; right: 25px; width: 65px; height: 65px;
+            border-radius: 50%; background: var(--panic); border: 3px solid #fff; color: white;
+            font-size: 2rem; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; z-index: 900; box-shadow: 0 5px 20px rgba(255, 23, 68, 0.6);
+            transition: transform 0.2s; animation: pulse-red 2s infinite;
+        }
+        #globalPanicBtn:active { transform: scale(0.9); }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 23, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(255, 23, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 23, 68, 0); } }
+
         .journal-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; padding: 0;}
         .journal-btn:hover { opacity: 1; transform: scale(1.1); }
         .has-note { opacity: 1; color: var(--gold); }
 
+        /* BADGES - Tydligare färger */
         .badges { display: flex; gap: 5px; }
-        .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: bold; text-transform: uppercase; }
-        .badge-allowed { background: rgba(0, 230, 118, 0.2); color: #69f0ae; }
-        .badge-exempt { background: rgba(124, 77, 255, 0.2); color: #b388ff; }
+        .badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-allowed { background: rgba(0, 200, 83, 0.2); color: #00e676; border: 1px solid #00e676; }
+        .badge-exempt { background: rgba(124, 77, 255, 0.2); color: #b388ff; border: 1px solid #b388ff; }
 
         .btn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 8px; margin-bottom: 15px; }
         button { padding: 12px 5px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; color: #ddd; background: #2c2c2c; transition: transform 0.1s; }
@@ -115,15 +144,8 @@
         .summary-view { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 8px; }
         .edit-btn { background: transparent; border: 1px solid #555; padding: 5px 10px; font-size: 0.8rem; }
 
-        /* WAIFU CARDS - FIXAD PADDING */
-        .waifu-grid { 
-            display: flex; 
-            gap: 20px; 
-            overflow-x: auto; 
-            /* ÖKAD PADDING: Topp 25px (för lyftet) och Botten 40px (för skuggan) */
-            padding: 25px 10px 40px 10px; 
-            scrollbar-width: none; 
-        }
+        /* WAIFU CARDS */
+        .waifu-grid { display: flex; gap: 20px; overflow-x: auto; padding: 25px 10px 40px 10px; scrollbar-width: none; }
         .waifu-card { 
             flex: 0 0 170px; height: 260px; padding: 0; border-radius: 14px; border: 1px solid #444;
             text-align: center; position: relative; overflow: hidden; cursor: pointer;
@@ -131,11 +153,9 @@
             background-size: cover; background-position: center; background-color: #222;
         }
         .waifu-card:hover { transform: translateY(-12px) scale(1.03); z-index: 10; box-shadow: 0 15px 30px rgba(0,0,0,0.7); border-color: #fff; }
-        
         .bg-common { background-image: url('card_common.jpg'); border-color: #888; }
         .bg-rare { background-image: url('card_rare.jpg'); border-color: var(--gold); }
         .bg-legendary { background-image: url('card_legendary.jpg'); border-color: var(--legendary); }
-        
         .waifu-img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; background: transparent; position: absolute; top: 0; left: 0; z-index: 1; transition: transform 0.5s ease; }
         .waifu-card:hover .waifu-img { transform: scale(1.1); }
         .waifu-card::before { content: ""; position: absolute; top: 0; left: -150%; width: 100%; height: 100%; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.6) 45%, rgba(255, 255, 255, 0.8) 50%, rgba(255, 255, 255, 0.6) 55%, transparent 70%); transform: skewX(-25deg); z-index: 10; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
@@ -143,44 +163,19 @@
         @keyframes holo-sweep { 0% { left: -150%; } 100% { left: 200%; } }
         .bg-legendary::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(125deg, rgba(255,0,0,0.2), rgba(255,165,0,0.2), rgba(255,255,0,0.2), rgba(0,128,0,0.2), rgba(0,0,255,0.2), rgba(75,0,130,0.2), rgba(238,130,238,0.2)); background-size: 200% 200%; mix-blend-mode: overlay; z-index: 2; opacity: 0.7; animation: rainbow-shift 4s infinite linear; pointer-events: none; }
         @keyframes rainbow-shift { 0% {background-position: 0% 50%} 50% {background-position: 100% 50%} 100% {background-position: 0% 50%} }
-
         .waifu-info { padding: 8px; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 70%, transparent 100%); position: absolute; bottom: 0; width: 100%; z-index: 5; }
         .waifu-label { font-size: 0.85rem; color: #fff; text-transform: uppercase; font-weight: bold; text-shadow: 0 2px 4px black; }
         .waifu-count { position: absolute; top: 8px; right: 10px; font-size: 2.2rem; font-weight: 900; line-height: 1; z-index: 6; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px rgba(0,0,0,0.8); }
         .count-special { color: #fff; } .count-shiny { color: var(--gold); } .count-legendary { color: var(--legendary); }
 
         /* TRADING BOX */
-        .trade-box {
-            background: rgba(30, 30, 30, 0.95);
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 15px;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-        .trade-header {
-            font-size: 0.85rem; color: #888; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; font-weight: bold;
-        }
+        .trade-box { background: rgba(30, 30, 30, 0.95); padding: 15px; border-radius: 12px; margin-top: 15px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); }
+        .trade-header { font-size: 0.85rem; color: #888; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; font-weight: bold; }
         .trade-actions { display: flex; gap: 10px; }
-        .trade-btn {
-            flex: 1;
-            background: #222;
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 10px;
-            cursor: pointer;
-            transition: transform 0.1s, background 0.2s;
-        }
+        .trade-btn { flex: 1; background: #222; border: 1px solid #444; border-radius: 8px; padding: 10px; cursor: pointer; transition: transform 0.1s, background 0.2s; }
         .trade-btn:active { transform: scale(0.95); }
         .trade-btn:hover { background: #2a2a2a; border-color: #666; }
-        
-        .trade-row {
-            font-size: 1.4rem;
-            font-weight: 900;
-            margin-bottom: 5px;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            text-shadow: 0 2px 2px rgba(0,0,0,0.5);
-        }
+        .trade-row { font-size: 1.4rem; font-weight: 900; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; text-shadow: 0 2px 2px rgba(0,0,0,0.5); }
         .cost-silver { color: var(--silver); text-shadow: 0 0 5px rgba(224, 224, 224, 0.3); }
         .cost-gold { color: var(--gold); text-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
         .gain-legendary { color: var(--legendary); text-shadow: 0 0 8px rgba(213, 0, 249, 0.4); }
@@ -207,9 +202,22 @@
         .heatmap-day.success { background: var(--success); color: black; }
         .heatmap-day.fail { background: var(--fail); color: white; }
         .heatmap-day.neutral { background: #555; }
+        
+        /* MODALS */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
         .modal img { max-width: 100%; max-height: 80vh; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 50px rgba(255,255,255,0.2); border-radius: 15px; }
         @keyframes popIn { from { transform: scale(0.8); } to { transform: scale(1); } }
+        
+        /* PANIC/SUCCESS MODALS */
+        #panicModal, #successModal, #weeklyModal { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); z-index: 9999; display: none; justify-content: center; align-items: center; }
+        #panicImg, #successImg, #weeklyImg { max-height: 85vh; max-width: 95vw; border: none; background: transparent; box-shadow: none; }
+        #panicImg { filter: drop-shadow(0 0 20px rgba(233, 30, 99, 0.8)); animation: energetic-move 0.4s infinite alternate ease-in-out; }
+        @keyframes energetic-move { 0% { transform: translateY(0) rotate(0deg) scale(1); } 25% { transform: translateY(-15px) rotate(-3deg) scale(1.02); } 50% { transform: translateY(0) rotate(3deg) scale(1.02); } 75% { transform: translateY(-7px) rotate(-1deg) scale(1.05); } 100% { transform: translateY(0) rotate(0deg) scale(1); } }
+        #successImg { filter: drop-shadow(0 0 25px rgba(0, 200, 83, 0.8)); animation: joy-jump 0.6s infinite alternate ease-out; }
+        @keyframes joy-jump { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(-30px) scale(1.05); } }
+        #weeklyImg { filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.9)); animation: float-gold 3s infinite alternate ease-in-out; }
+        @keyframes float-gold { 0% { transform: translateY(0); filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.7)); } 100% { transform: translateY(-20px); filter: drop-shadow(0 0 60px rgba(255, 215, 0, 1)); } }
+
         #fireworksCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 1000; }
         .action-btn { background: var(--success); width: 100%; padding: 12px; margin: 5px 0; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; color: #000; }
         .archive-btn { width: 100%; padding: 15px; font-size: 1.1rem; background: linear-gradient(45deg, #ff6f00, #ffca28); color: black; font-weight: bold; margin-top: 20px; box-shadow: 0 4px 15px rgba(255, 111, 0, 0.3); border:none; border-radius: 12px; cursor: pointer;}
@@ -218,7 +226,16 @@
 <body>
     <div id="bg-layer"></div>
     <canvas id="fireworksCanvas"></canvas>
+    
+    <!-- GLOBAL PANIC BUTTON -->
+    <div id="globalPanicBtn" onclick="triggerPanic()">❗</div>
+
+    <!-- MODALS -->
     <div id="imgModal" class="modal" onclick="this.style.display='none'"><img id="modalImg" src=""></div>
+    
+    <div id="panicModal" class="modal" onclick="stopPanic()"><img id="panicImg" src="panic.png" alt="Panic!"></div>
+    <div id="successModal" class="modal" onclick="stopSuccess()"><img id="successImg" src="success.png" alt="Success!"></div>
+    <div id="weeklyModal" class="modal" onclick="stopWeekly()"><img id="weeklyImg" src="weekly.png" alt="Weekly Victory!"></div>
 
     <!-- RPG HEADER -->
     <div class="rpg-header">
@@ -250,38 +267,17 @@
     <div id="rewards" class="content-section">
         <h3 style="color:var(--accent-nn); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">No Nut-chan</h3>
         <div class="waifu-grid">
-            <div class="waifu-card bg-common" onclick="openModal('special.png')">
-                <span id="nn-special-count" class="waifu-count count-special">0</span>
-                <img src="special.png" class="waifu-img" onerror="this.style.display='none';this.parentElement.style.background='red'">
-                <div class="waifu-info"><div class="waifu-label">Special</div></div>
-            </div>
-            <div class="waifu-card bg-rare" onclick="openModal('shiny.png')">
-                <span id="nn-shiny-count" class="waifu-count count-shiny">0</span>
-                <img src="shiny.png" class="waifu-img">
-                <div class="waifu-info"><div class="waifu-label">Shiny</div></div>
-            </div>
-            <div class="waifu-card bg-legendary" onclick="openModal('legendary.png')">
-                <span id="nn-legendary-count" class="waifu-count count-legendary">0</span>
-                <img src="legendary.png" class="waifu-img">
-                <div class="waifu-info"><div class="waifu-label">Legendary</div></div>
-            </div>
+            <div class="waifu-card bg-common" onclick="openModal('special.png')"><span id="nn-special-count" class="waifu-count count-special">0</span><img src="special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
+            <div class="waifu-card bg-rare" onclick="openModal('shiny.png')"><span id="nn-shiny-count" class="waifu-count count-shiny">0</span><img src="shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
+            <div class="waifu-card bg-legendary" onclick="openModal('legendary.png')"><span id="nn-legendary-count" class="waifu-count count-legendary">0</span><img src="legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
         </div>
-        
-        <!-- NO NUT TRADING UI -->
         <div class="trade-box">
             <div class="trade-header">Black Market</div>
             <div class="trade-actions">
-                <button class="trade-btn" onclick="trade('nonut', 'special', 15)">
-                    <div class="trade-row"><span class="cost-silver">15</span><span class="arrow">➡</span><span class="gain-legendary">1</span></div>
-                    <div class="trade-desc">Special > Legendary</div>
-                </button>
-                <button class="trade-btn" onclick="trade('nonut', 'shiny', 2)">
-                    <div class="trade-row"><span class="cost-gold">2</span><span class="arrow">➡</span><span class="gain-legendary">1</span></div>
-                    <div class="trade-desc">Shiny > Legendary</div>
-                </button>
+                <button class="trade-btn" onclick="trade('nonut', 'special', 15)"><div class="trade-row"><span class="cost-silver">15</span><span class="arrow">➡</span><span class="gain-legendary">1</span></div><div class="trade-desc">Special > Legendary</div></button>
+                <button class="trade-btn" onclick="trade('nonut', 'shiny', 2)"><div class="trade-row"><span class="cost-gold">2</span><span class="arrow">➡</span><span class="gain-legendary">1</span></div><div class="trade-desc">Shiny > Legendary</div></button>
             </div>
         </div>
-
         <div class="progress-box">
             <div class="streak-header stats-flex">
                 <div class="stat-item"><div class="stat-label">Streak</div><div class="stat-number"><span id="nn-streak">0</span>w</div></div>
@@ -293,38 +289,17 @@
 
         <h3 style="color:var(--accent-sleep); margin-left: 5px; margin-top:30px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Sleep-chan</h3>
         <div class="waifu-grid">
-            <div class="waifu-card bg-common" onclick="openModal('sleep_special.png')">
-                <span id="sl-special-count" class="waifu-count count-special">0</span>
-                <img src="sleep_special.png" class="waifu-img">
-                <div class="waifu-info"><div class="waifu-label">Special</div></div>
-            </div>
-            <div class="waifu-card bg-rare" onclick="openModal('sleep_shiny.png')">
-                <span id="sl-shiny-count" class="waifu-count count-shiny">0</span>
-                <img src="sleep_shiny.png" class="waifu-img">
-                <div class="waifu-info"><div class="waifu-label">Shiny</div></div>
-            </div>
-            <div class="waifu-card bg-legendary" onclick="openModal('sleep_legendary.png')">
-                <span id="sl-legendary-count" class="waifu-count count-legendary">0</span>
-                <img src="sleep_legendary.png" class="waifu-img">
-                <div class="waifu-info"><div class="waifu-label">Legendary</div></div>
-            </div>
+            <div class="waifu-card bg-common" onclick="openModal('sleep_special.png')"><span id="sl-special-count" class="waifu-count count-special">0</span><img src="sleep_special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
+            <div class="waifu-card bg-rare" onclick="openModal('sleep_shiny.png')"><span id="sl-shiny-count" class="waifu-count count-shiny">0</span><img src="sleep_shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
+            <div class="waifu-card bg-legendary" onclick="openModal('sleep_legendary.png')"><span id="sl-legendary-count" class="waifu-count count-legendary">0</span><img src="sleep_legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
         </div>
-
-        <!-- SLEEP TRADING UI -->
         <div class="trade-box">
             <div class="trade-header">Black Market</div>
             <div class="trade-actions">
-                <button class="trade-btn" onclick="trade('sleep', 'special', 15)">
-                    <div class="trade-row"><span class="cost-silver">15</span><span class="arrow">➡</span><span class="gain-legendary">1</span></div>
-                    <div class="trade-desc">Special > Legendary</div>
-                </button>
-                <button class="trade-btn" onclick="trade('sleep', 'shiny', 2)">
-                    <div class="trade-row"><span class="cost-gold">2</span><span class="arrow">➡</span><span class="gain-legendary">1</span></div>
-                    <div class="trade-desc">Shiny > Legendary</div>
-                </button>
+                <button class="trade-btn" onclick="trade('sleep', 'special', 15)"><div class="trade-row"><span class="cost-silver">15</span><span class="arrow">➡</span><span class="gain-legendary">1</span></div><div class="trade-desc">Special > Legendary</div></button>
+                <button class="trade-btn" onclick="trade('sleep', 'shiny', 2)"><div class="trade-row"><span class="cost-gold">2</span><span class="arrow">➡</span><span class="gain-legendary">1</span></div><div class="trade-desc">Shiny > Legendary</div></button>
             </div>
         </div>
-
         <div class="progress-box">
             <div class="streak-header stats-flex">
                 <div class="stat-item"><div class="stat-label">Streak</div><div class="stat-number"><span id="sl-streak">0</span>w</div></div>
@@ -346,18 +321,14 @@
             <h3>Settings</h3>
             <label>Target Wake-up Time:</label>
             <select id="target-time-select" style="width:100%; padding:10px; margin-bottom:15px; background:#333; color:white; border:none;"></select>
-            
-            <h4>Data Management (Backup)</h4>
+            <h4>Data Management</h4>
             <button class="action-btn" style="background: #0277bd; color:white;" onclick="exportData()">💾 Export Progress</button>
             <button class="action-btn" style="background: #555; color:white;" onclick="document.getElementById('fileInput').click()">📂 Import Progress</button>
             <input type="file" id="fileInput" accept=".json" onchange="importData(this)" style="display:none;">
-
             <h4>Allowed Days (No-Nut)</h4>
             <div id="days-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;"></div>
-            
-            <h4>Sleep Exempt (No Target)</h4>
+            <h4>Sleep Exempt</h4>
             <div id="exempt-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;"></div>
-            
             <button onclick="saveSettings()" class="action-btn">Save Settings</button>
             <button onclick="resetData()" class="action-btn" style="background:var(--fail); color:white;">Reset All Data</button>
         </div>
@@ -366,42 +337,35 @@
     <script>
         const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
         const titles = ["Novice", "Beginner", "Apprentice", "Disciplined", "Guardian", "Knight", "Elite", "Master", "Grandmaster", "Legend", "Mythic", "Godlike"];
+        const audioFiles = ['voice1.mp3', 'voice2.mp3', 'voice3.mp3', 'voice4.mp3', 'voice5.mp3']; 
+        const successAudioFiles = ['success1.mp3', 'success2.mp3', 'success3.mp3', 'success4.mp3', 'success5.mp3'];
 
         let config = { allowedDays:[2,5], sleepExemptDays:[5,6], targetWakeTime:8, wakeTimes:[{v:7,l:'07:00'},{v:8,l:'08:00'},{v:9,l:'09:00'},{v:10,l:'10:00'},{v:11,l:'11:00'},{v:12,l:'12:00+'}] };
         let rewards = { nonut:{special:0,shiny:0,legendary:0,streak:0}, sleep:{special:0,shiny:0,legendary:0,streak:0} };
         let rpg = { xp: 0 }; 
         let currentWeek = [], archive = [];
+        let currentAudio = null;
 
         function init() {
             if(localStorage.getItem('wt_config')) {
                 let tempConfig = JSON.parse(localStorage.getItem('wt_config'));
-                // Force buttons update
                 tempConfig.wakeTimes = config.wakeTimes;
                 config = tempConfig;
             }
-            
             if(localStorage.getItem('wt_rewards')) rewards = JSON.parse(localStorage.getItem('wt_rewards'));
-            
-            // Migration check (Chibi -> Special)
             if(rewards.nonut.chibi !== undefined) { rewards.nonut.special = rewards.nonut.chibi; delete rewards.nonut.chibi; }
             if(rewards.sleep.chibi !== undefined) { rewards.sleep.special = rewards.sleep.chibi; delete rewards.sleep.chibi; }
-
             if(localStorage.getItem('wt_rpg')) rpg = JSON.parse(localStorage.getItem('wt_rpg'));
             if(localStorage.getItem('wt_week')) currentWeek = JSON.parse(localStorage.getItem('wt_week'));
             else initWeek();
             if(localStorage.getItem('wt_archive')) archive = JSON.parse(localStorage.getItem('wt_archive'));
-
-            renderLog();
-            renderRewards();
-            renderSettingsUI();
-            renderRPG();
+            renderLog(); renderRewards(); renderSettingsUI(); renderRPG();
         }
 
         function initWeek() {
-            currentWeek = days.map((d,i) => ({ day:d, idx:i, allowed:config.allowedDays.includes(i), exempt:config.sleepExemptDays.includes(i), sleep:null, kept:null, note: "" }));
+            currentWeek = days.map((d,i) => ({ day:d, idx:i, allowed:config.allowedDays.includes(i), exempt:config.sleepExemptDays.includes(i), sleep:null, kept:null }));
             save();
         }
-
         function save() {
             localStorage.setItem('wt_week', JSON.stringify(currentWeek));
             localStorage.setItem('wt_archive', JSON.stringify(archive));
@@ -410,94 +374,112 @@
             localStorage.setItem('wt_rpg', JSON.stringify(rpg));
         }
 
-        // --- TRADING SYSTEM ---
+        // --- AUDIO HELPERS (FIXED) ---
+        function playAudioWithFallback(fileArray, modalId) {
+            if(fileArray.length === 0) return;
+            const randIndex = Math.floor(Math.random() * fileArray.length);
+            const file = fileArray[randIndex];
+            if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+            currentAudio = new Audio(file);
+            const playPromise = currentAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    currentAudio.onended = function() { document.getElementById(modalId).style.display = 'none'; };
+                }).catch(error => {
+                    console.log("Audio Failed:", error);
+                    setTimeout(() => { document.getElementById(modalId).style.display = 'none'; }, 3000);
+                });
+            }
+        }
+        function stopAudio() { if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; } }
+
+        // --- MODAL TRIGGERS ---
+        function triggerPanic() {
+            document.getElementById('panicModal').style.display = 'flex'; 
+            playAudioWithFallback(audioFiles, 'panicModal');
+        }
+        function stopPanic() { document.getElementById('panicModal').style.display = 'none'; stopAudio(); }
+        function triggerSuccess() {
+            document.getElementById('successModal').style.display = 'flex';
+            triggerFireworks(window.innerWidth/2, window.innerHeight/2);
+            playAudioWithFallback(successAudioFiles, 'successModal');
+        }
+        function stopSuccess() { document.getElementById('successModal').style.display = 'none'; stopAudio(); }
+
+        function triggerWeeklySuccess() {
+            document.getElementById('weeklyModal').style.display = 'flex';
+            if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+            currentAudio = new Audio('weekly.mp3');
+            const playPromise = currentAudio.play();
+            if(playPromise !== undefined) { playPromise.catch(e => { setTimeout(() => { stopWeekly(); }, 5000); }); }
+            let loopCount = 0;
+            const fireLoop = setInterval(() => {
+                triggerFireworks(Math.random() * window.innerWidth, Math.random() * (window.innerHeight * 0.8));
+                loopCount++; if(loopCount > 15) clearInterval(fireLoop);
+            }, 300);
+        }
+        function stopWeekly() {
+            document.getElementById('weeklyModal').style.display = 'none'; stopAudio();
+            archive.push({date:new Date(), data:[...currentWeek]}); initWeek(); renderLog(); renderRewards(); renderStats();
+        }
+
+        // --- DAILY CHECK ---
+        function checkDayCompletion(i) {
+            const d = currentWeek[i];
+            const sleepOk = d.sleep !== null && (d.exempt || d.sleep <= config.targetWakeTime);
+            const nutOk = d.allowed ? (d.kept !== null) : (d.kept === true);
+            if (sleepOk && nutOk) triggerSuccess();
+        }
+
+        // --- TRADING ---
         function trade(category, type, cost) {
             let bank = rewards[category];
             if (bank[type] >= cost) {
                 if(confirm(`Trade ${cost} ${type} for 1 Legendary?`)) {
-                    bank[type] -= cost;
-                    bank.legendary++;
-                    save();
-                    renderRewards();
-                    triggerFireworks();
-                    alert("Trade Successful! You got a Legendary!");
+                    bank[type] -= cost; bank.legendary++; save(); renderRewards(); triggerFireworks(window.innerWidth/2, window.innerHeight/2); alert("Trade Successful!");
                 }
-            } else {
-                alert(`Not enough ${type}! You need ${cost}.`);
-            }
+            } else { alert(`Not enough ${type}!`); }
         }
 
-        // --- RPG SYSTEM (Updated) ---
+        // --- RPG ---
         function getLevelData(totalXP) {
-            let level = 1;
-            let cost = 500; 
-            let remainingXP = totalXP;
-            while (remainingXP >= cost) {
-                remainingXP -= cost;
-                level++;
-                cost += 20; 
-            }
+            let level = 1, cost = 500, remainingXP = totalXP;
+            while (remainingXP >= cost) { remainingXP -= cost; level++; cost += 20; }
             return { level, currentXP: remainingXP, nextLevelCost: cost };
         }
-
         function addXP(amount) {
-            const oldData = getLevelData(rpg.xp);
-            rpg.xp += amount;
-            const newData = getLevelData(rpg.xp);
-            if (newData.level > oldData.level) {
-                // BONUS ON LEVEL UP
-                rewards.nonut.special++;
-                rewards.sleep.special++;
-                save(); // Save immediately
-                alert(`LEVEL UP! You are now Level ${newData.level}!\nBonus: +1 Special No Nut-chan & +1 Special Sleep-chan!`);
-                triggerFireworks();
-            }
-            save();
-            renderRPG();
+            const oldData = getLevelData(rpg.xp); rpg.xp += amount; const newData = getLevelData(rpg.xp);
+            if (newData.level > oldData.level) { rewards.nonut.special++; rewards.sleep.special++; save(); alert(`LEVEL UP! Level ${newData.level}!`); triggerFireworks(window.innerWidth/2, window.innerHeight/2); }
+            save(); renderRPG();
         }
-
         function renderRPG() {
             const data = getLevelData(rpg.xp);
             document.getElementById('rpg-level').innerText = data.level;
             document.getElementById('rpg-current-xp').innerText = data.currentXP;
             document.getElementById('rpg-next-xp').innerText = data.nextLevelCost;
-            const percent = Math.min((data.currentXP / data.nextLevelCost) * 100, 100);
-            document.getElementById('xp-bar').style.width = percent + '%';
-            let titleIndex = Math.floor((data.level - 1) / 5); 
-            if (titleIndex >= titles.length) titleIndex = titles.length - 1;
+            document.getElementById('xp-bar').style.width = Math.min((data.currentXP / data.nextLevelCost) * 100, 100) + '%';
+            let titleIndex = Math.floor((data.level - 1) / 5); if (titleIndex >= titles.length) titleIndex = titles.length - 1;
             document.getElementById('rpg-title').innerText = titles[titleIndex];
         }
 
-        // --- MAIN LOGIC ---
-        function editNote(i) {
-            const note = prompt("Note for " + currentWeek[i].day + ":", currentWeek[i].note || "");
-            if (note !== null) { currentWeek[i].note = note; save(); renderLog(); }
-        }
-
+        // --- LOGIC ---
+        function editNote(i) { const note = prompt("Note:", currentWeek[i].note || ""); if (note !== null) { currentWeek[i].note = note; save(); renderLog(); } }
         function renderLog() {
-            const container = document.getElementById('week-container');
-            container.innerHTML = '';
+            const container = document.getElementById('week-container'); container.innerHTML = '';
             let jsDay = new Date().getDay(); let todayIdx = jsDay === 0 ? 6 : jsDay - 1; 
-
             currentWeek.forEach((d, i) => {
                 const card = document.createElement('div');
                 let classes = 'day-card';
                 if(d.allowed) classes += ' allowed-day'; if(d.exempt) classes += ' exempt-day'; if(i === todayIdx) classes += ' is-today';
                 if(d.sleep !== null && d.kept !== null) classes += ' completed';
                 card.className = classes;
-
                 let badges = '';
                 if(d.allowed) badges += '<span class="badge badge-allowed">Allowed</span>';
-                if(d.exempt) badges += '<span class="badge badge-exempt">Exempt</span>';
-                const noteClass = d.note ? "has-note" : ""; const noteIndicator = d.note ? "📝" : "📓";
-
-                let content = `<div class="card-header"><span class="day-title">${d.day}</span><div class="header-right"><div class="badges">${badges}</div><button class="journal-btn ${noteClass}" onclick="editNote(${i})">${noteIndicator}</button></div></div>`;
-
+                if(d.exempt) badges += '<span class="badge badge-exempt">Sleep In</span>';
+                let content = `<div class="card-header"><span class="day-title">${d.day}</span><div class="header-right"><div class="badges">${badges}</div><button class="journal-btn ${d.note?"has-note":""}" onclick="editNote(${i})">${d.note?"📝":"📓"}</button></div></div>`;
                 if (d.sleep !== null && d.kept !== null) {
                     const sleepText = d.sleep <= config.targetWakeTime || d.exempt ? '✅ On Time' : '❌ Overslept';
-                    let nutText = "";
-                    if (d.allowed) nutText = d.kept ? '✅ Indulged' : '⏸️ Skipped';
-                    else nutText = d.kept ? '✅ Success' : '❌ Failed';
+                    let nutText = d.allowed ? (d.kept ? '✅ Indulged' : '⏸️ Skipped') : (d.kept ? '✅ Success' : '❌ Failed');
                     content += `<div class="summary-view"><div class="summary-text"><b>Sleep:</b> ${findLabel(d.sleep)} (${sleepText})<br><b>Status:</b> ${nutText}</div><button class="edit-btn" onclick="resetDay(${i})">Edit</button></div>`;
                 } else {
                     let sleepBtns = ''; config.wakeTimes.forEach(t => { sleepBtns += `<button class="sleep-btn ${d.sleep===t.v?'selected':''}" onclick="setSleep(${i},${t.v})">${t.l}</button>`; });
@@ -509,121 +491,47 @@
         }
 
         function findLabel(val) { const t = config.wakeTimes.find(x => x.v === val); return t ? t.l : val; }
-        function setSleep(i, v) { if (currentWeek[i].sleep === null) { if (currentWeek[i].exempt || v <= config.targetWakeTime) addXP(5); } currentWeek[i].sleep = v; save(); renderLog(); }
-        function setKept(i, v) { if(currentWeek[i].kept === null) { if(!currentWeek[i].allowed && v === true) addXP(10); else if(currentWeek[i].allowed) addXP(5); } currentWeek[i].kept = v; save(); renderLog(); }
+        function setSleep(i, v) { if (currentWeek[i].sleep === null) { if (currentWeek[i].exempt || v <= config.targetWakeTime) addXP(5); } currentWeek[i].sleep = v; save(); renderLog(); checkDayCompletion(i); }
+        function setKept(i, v) { if(currentWeek[i].kept === null) { if(!currentWeek[i].allowed && v === true) addXP(10); else if(currentWeek[i].allowed) addXP(5); } currentWeek[i].kept = v; save(); renderLog(); checkDayCompletion(i); }
         function resetDay(i) { currentWeek[i].sleep = null; currentWeek[i].kept = null; save(); renderLog(); }
-
         function archiveWeek() {
             const unlogged = currentWeek.filter(d => d.sleep === null || d.kept === null).length;
-            if(unlogged > 0) { if(!confirm(`WARNING: You have ${unlogged} empty days. Proceed?`)) return; } 
-            else { if(!confirm("Is the week over? Data will be archived.")) return; }
-            
-            let itemsWon = [];
-            let failReasons = [];
+            if(unlogged > 0) { if(!confirm(`WARNING: ${unlogged} empty days. Proceed?`)) return; } else { if(!confirm("Archive week?")) return; }
+            let itemsWon = [], failReasons = [];
             const nnRequiredDays = currentWeek.filter(d => !d.allowed);
             const nnSucc = nnRequiredDays.every(d => d.kept === true);
-            
-            if(nnSucc) {
-                rewards.nonut.streak++; rewards.nonut.special++; addXP(50); 
-                itemsWon.push("💖 Special No Nut-chan (+50 XP)");
-                if(rewards.nonut.streak > 0 && rewards.nonut.streak % 4 === 0) { rewards.nonut.shiny++; itemsWon.push("✨ Shiny No Nut-chan"); addXP(100); }
-                if(rewards.nonut.streak > 0 && rewards.nonut.streak % 8 === 0) { rewards.nonut.legendary++; itemsWon.push("👑 Legendary No Nut-chan"); addXP(200); }
-            } else { rewards.nonut.streak = 0; failReasons.push("No-Nut: Failed."); }
-
+            if(nnSucc) { rewards.nonut.streak++; rewards.nonut.special++; addXP(50); itemsWon.push("💖 Special No Nut-chan (+50 XP)"); if(rewards.nonut.streak > 0 && rewards.nonut.streak % 4 === 0) { rewards.nonut.shiny++; itemsWon.push("✨ Shiny No Nut-chan"); addXP(100); } if(rewards.nonut.streak > 0 && rewards.nonut.streak % 8 === 0) { rewards.nonut.legendary++; itemsWon.push("👑 Legendary No Nut-chan"); addXP(200); } } else { rewards.nonut.streak = 0; failReasons.push("No-Nut Failed"); }
             const slRequiredDays = currentWeek.filter(d => !d.exempt);
             const slSucc = slRequiredDays.every(d => d.sleep !== null && d.sleep <= config.targetWakeTime);
-
-            if(slSucc) {
-                rewards.sleep.streak++; rewards.sleep.special++; addXP(50); 
-                itemsWon.push("💤 Special Sleep-chan (+50 XP)");
-                if(rewards.sleep.streak > 0 && rewards.sleep.streak % 4 === 0) { rewards.sleep.shiny++; itemsWon.push("✨ Shiny Sleep-chan"); addXP(100); }
-                if(rewards.sleep.streak > 0 && rewards.sleep.streak % 8 === 0) { rewards.sleep.legendary++; itemsWon.push("👑 Legendary Sleep-chan"); addXP(200); }
-            } else { rewards.sleep.streak = 0; failReasons.push("Sleep: Missed target."); }
-
+            if(slSucc) { rewards.sleep.streak++; rewards.sleep.special++; addXP(50); itemsWon.push("💤 Special Sleep-chan (+50 XP)"); if(rewards.sleep.streak > 0 && rewards.sleep.streak % 4 === 0) { rewards.sleep.shiny++; itemsWon.push("✨ Shiny Sleep-chan"); addXP(100); } if(rewards.sleep.streak > 0 && rewards.sleep.streak % 8 === 0) { rewards.sleep.legendary++; itemsWon.push("👑 Legendary Sleep-chan"); addXP(200); } } else { rewards.sleep.streak = 0; failReasons.push("Sleep Failed"); }
             save(); 
-            if (itemsWon.length > 0) triggerFireworks();
-            let msg = "";
-            if(itemsWon.length > 0) msg += "CONGRATS! You got:\n" + itemsWon.join("\n") + "\n\n";
-            if(failReasons.length > 0) msg += "Status:\n" + failReasons.join("\n");
-            else if (itemsWon.length > 0) msg += "Perfect week!";
-            else msg += "Better luck next week.";
-            alert(msg);
-
-            archive.push({date:new Date(), data:[...currentWeek]});
-            initWeek(); renderLog(); renderRewards(); renderStats();
+            if(itemsWon.length > 0) triggerWeeklySuccess();
+            else { alert("Better luck next week.\n" + failReasons.join("\n")); archive.push({date:new Date(), data:[...currentWeek]}); initWeek(); renderLog(); renderRewards(); renderStats(); }
         }
-
         function renderRewards() {
             const setTxt = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
-            setTxt('nn-special-count', rewards.nonut.special); setTxt('nn-shiny-count', rewards.nonut.shiny);
-            setTxt('nn-legendary-count', rewards.nonut.legendary); setTxt('nn-streak', rewards.nonut.streak);
-            setTxt('sl-special-count', rewards.sleep.special); setTxt('sl-shiny-count', rewards.sleep.shiny);
-            setTxt('sl-legendary-count', rewards.sleep.legendary); setTxt('sl-streak', rewards.sleep.streak);
-
-            let nnTotal = 0, slTotal = 0;
-            archive.forEach(w => {
-                const reqNN = w.data.filter(d => !d.allowed); if(reqNN.length > 0 && reqNN.every(d => d.kept === true)) nnTotal++;
-                const reqSL = w.data.filter(d => !d.exempt); if(reqSL.length > 0 && reqSL.every(d => d.sleep !== null && d.sleep <= config.targetWakeTime)) slTotal++;
-            });
-            setTxt('nn-total', nnTotal); setTxt('sl-total', slTotal);
-            updateBar('nn', rewards.nonut.streak); updateBar('sl', rewards.sleep.streak);
+            setTxt('nn-special-count', rewards.nonut.special); setTxt('nn-shiny-count', rewards.nonut.shiny); setTxt('nn-legendary-count', rewards.nonut.legendary); setTxt('nn-streak', rewards.nonut.streak);
+            setTxt('sl-special-count', rewards.sleep.special); setTxt('sl-shiny-count', rewards.sleep.shiny); setTxt('sl-legendary-count', rewards.sleep.legendary); setTxt('sl-streak', rewards.sleep.streak);
+            let nnTotal = 0, slTotal = 0; archive.forEach(w => { const reqNN = w.data.filter(d => !d.allowed); if(reqNN.length > 0 && reqNN.every(d => d.kept === true)) nnTotal++; const reqSL = w.data.filter(d => !d.exempt); if(reqSL.length > 0 && reqSL.every(d => d.sleep !== null && d.sleep <= config.targetWakeTime)) slTotal++; }); setTxt('nn-total', nnTotal); setTxt('sl-total', slTotal); updateBar('nn', rewards.nonut.streak); updateBar('sl', rewards.sleep.streak);
         }
-
-        function updateBar(prefix, streak) {
-            let cyclePos = streak % 8; if (streak > 0 && cyclePos === 0) cyclePos = 8;
-            const percent = (cyclePos / 8) * 100;
-            document.getElementById(`${prefix}-bar`).style.width = percent + '%';
-            let msg = cyclePos < 4 ? `Next Shiny: ${4 - cyclePos}w` : (cyclePos < 8 ? `Next Legendary: ${8 - cyclePos}w` : "Level Up! New cycle next week.");
-            document.getElementById(`${prefix}-next-text`).innerText = msg;
-        }
-
-        function renderStats() {
-            const hm = document.getElementById('sleep-heatmap'); hm.innerHTML = '';
-            let all = []; archive.slice(-4).forEach(w => all.push(...w.data)); all.push(...currentWeek);
-            all.slice(-28).forEach(d => {
-                const el = document.createElement('div'); el.className = 'heatmap-day'; el.innerText = d.day.substring(0,1);
-                if(d.sleep===null) el.style.background='#222'; else if(d.exempt) el.className+=' neutral'; else if(d.sleep<=config.targetWakeTime) el.className+=' success'; else el.className+=' fail';
-                hm.appendChild(el);
-            });
-            const ctx = document.getElementById('sleepChart').getContext('2d');
-            const pts = all.filter(d=>d.sleep!==null).slice(-30);
-            if(window.sleepChartInstance) window.sleepChartInstance.destroy();
-            window.sleepChartInstance = new Chart(ctx, { type:'line', data:{ labels:pts.map(d=>d.day.substring(0,3)), datasets:[{ label:'Time', data:pts.map(d=>d.sleep), borderColor:'#7c4dff', tension:0.3 }] }, options:{ scales:{y:{min:6,max:13}}, plugins:{legend:{display:false}} } });
-            
-            let nnWins = 0, nnLosses = 0;
-            archive.forEach(w => {
-                const req = w.data.filter(d => !d.allowed); if(req.length === 0) return; 
-                const isWin = req.every(d => d.kept === true); if(isWin) nnWins++; else nnLosses++;
-            });
-            const ctxF = document.getElementById('fapChart').getContext('2d');
-            if(window.fapChartInstance) window.fapChartInstance.destroy();
-            window.fapChartInstance = new Chart(ctxF, { type: 'doughnut', data: { labels: ['Success Weeks', 'Failed Weeks'], datasets: [{ data: [nnWins, nnLosses], backgroundColor: ['#00c853', '#d50000'], borderWidth: 0 }] }, options: { plugins: { legend: { position: 'bottom', labels: { color: '#ccc' } } } } });
-        }
-
-        function renderSettingsUI() {
-            const sel = document.getElementById('target-time-select'); sel.innerHTML = '';
-            config.wakeTimes.forEach(t => { sel.innerHTML += `<option value="${t.v}" ${config.targetWakeTime==t.v?'selected':''}>${t.l}</option>`; });
-            const makeChecks = (id, src, all) => {
-                const c = document.getElementById(id); c.innerHTML='';
-                all.forEach((d,i)=>{ c.innerHTML+=`<label><input type="checkbox" value="${i}" ${src.includes(i)?'checked':''}> ${d}</label>`; });
-            };
-            makeChecks('days-list', config.allowedDays, days); makeChecks('exempt-list', config.sleepExemptDays, days);
-        }
-
-        function saveSettings() {
-            config.targetWakeTime = parseFloat(document.getElementById('target-time-select').value);
-            const getVals = (id) => Array.from(document.querySelectorAll(`#${id} input:checked`)).map(cb=>parseInt(cb.value));
-            config.allowedDays = getVals('days-list'); config.sleepExemptDays = getVals('exempt-list');
-            currentWeek.forEach((d, i) => { d.allowed = config.allowedDays.includes(i); d.exempt = config.sleepExemptDays.includes(i); });
-            save(); renderLog(); alert("Settings saved!");
-        }
-
-        function resetData(){ if(confirm("WARNING: All data will be deleted. Continue?")) { localStorage.clear(); location.reload(); } }
-        function switchTab(id) { document.querySelectorAll('.content-section').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.classList.add('active'); if(id==='stats') renderStats(); }
+        function updateBar(prefix, streak) { let cyclePos = streak % 8; if (streak > 0 && cyclePos === 0) cyclePos = 8; document.getElementById(`${prefix}-bar`).style.width = (cyclePos / 8) * 100 + '%'; let msg = cyclePos < 4 ? `Next Shiny: ${4 - cyclePos}w` : (cyclePos < 8 ? `Next Legendary: ${8 - cyclePos}w` : "Level Up! New cycle next week."); document.getElementById(`${prefix}-next-text`).innerText = msg; }
+        function renderStats() { const hm = document.getElementById('sleep-heatmap'); hm.innerHTML = ''; let all = []; archive.slice(-4).forEach(w => all.push(...w.data)); all.push(...currentWeek); all.slice(-28).forEach(d => { const el = document.createElement('div'); el.className = 'heatmap-day'; el.innerText = d.day.substring(0,1); if(d.sleep===null) el.style.background='#222'; else if(d.exempt) el.className+=' neutral'; else if(d.sleep<=config.targetWakeTime) el.className+=' success'; else el.className+=' fail'; hm.appendChild(el); }); const ctx = document.getElementById('sleepChart').getContext('2d'); const pts = all.filter(d=>d.sleep!==null).slice(-30); if(window.sleepChartInstance) window.sleepChartInstance.destroy(); window.sleepChartInstance = new Chart(ctx, { type:'line', data:{ labels:pts.map(d=>d.day.substring(0,3)), datasets:[{ label:'Time', data:pts.map(d=>d.sleep), borderColor:'#7c4dff', tension:0.3 }] }, options:{ scales:{y:{min:6,max:13}}, plugins:{legend:{display:false}} } }); let nnWins = 0, nnLosses = 0; archive.forEach(w => { const req = w.data.filter(d => !d.allowed); if(req.length === 0) return; const isWin = req.every(d => d.kept === true); if(isWin) nnWins++; else nnLosses++; }); const ctxF = document.getElementById('fapChart').getContext('2d'); if(window.fapChartInstance) window.fapChartInstance.destroy(); window.fapChartInstance = new Chart(ctxF, { type: 'doughnut', data: { labels: ['Success', 'Fail'], datasets: [{ data: [nnWins, nnLosses], backgroundColor: ['#00c853', '#d50000'], borderWidth: 0 }] }, options: { plugins: { legend: { position: 'bottom', labels: { color: '#ccc' } } } } }); }
+        function renderSettingsUI() { const sel = document.getElementById('target-time-select'); sel.innerHTML = ''; config.wakeTimes.forEach(t => { sel.innerHTML += `<option value="${t.v}" ${config.targetWakeTime==t.v?'selected':''}>${t.l}</option>`; }); const makeChecks = (id, src, all) => { const c = document.getElementById(id); c.innerHTML=''; all.forEach((d,i)=>{ c.innerHTML+=`<label><input type="checkbox" value="${i}" ${src.includes(i)?'checked':''}> ${d}</label>`; }); }; makeChecks('days-list', config.allowedDays, days); makeChecks('exempt-list', config.sleepExemptDays, days); }
+        function saveSettings() { config.targetWakeTime = parseFloat(document.getElementById('target-time-select').value); const getVals = (id) => Array.from(document.querySelectorAll(`#${id} input:checked`)).map(cb=>parseInt(cb.value)); config.allowedDays = getVals('days-list'); config.sleepExemptDays = getVals('exempt-list'); currentWeek.forEach((d, i) => { d.allowed = config.allowedDays.includes(i); d.exempt = config.sleepExemptDays.includes(i); }); save(); renderLog(); alert("Settings saved!"); }
+        function resetData(){ if(confirm("WARNING: All data will be deleted.")) { localStorage.clear(); location.reload(); } }
+        function switchTab(id) { document.querySelectorAll('.content-section').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.classList.add('active'); if(id==='stats') renderStats(); const pb = document.getElementById('globalPanicBtn'); if(pb) pb.style.display = id === 'settings' ? 'none' : 'flex'; }
         function openModal(src){ document.getElementById('modalImg').src=src; document.getElementById('imgModal').style.display='flex'; }
         function exportData() { const data = { config, rewards, rpg, currentWeek, archive, exportDate: new Date().toISOString() }; const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); const a = document.createElement('a'); a.href = dataStr; a.download = "waifu_tracker_backup.json"; a.click(); }
-        function importData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const json = JSON.parse(e.target.result); if(json.config) localStorage.setItem('wt_config', JSON.stringify(json.config)); if(json.rewards) localStorage.setItem('wt_rewards', JSON.stringify(json.rewards)); if(json.rpg) localStorage.setItem('wt_rpg', JSON.stringify(json.rpg)); if(json.currentWeek) localStorage.setItem('wt_week', JSON.stringify(json.currentWeek)); if(json.archive) localStorage.setItem('wt_archive', JSON.stringify(json.archive)); alert("Data imported! Reloading page."); location.reload(); } catch(err) { alert("Import error."); } }; reader.readAsText(file); }
-        function triggerFireworks() { const c=document.getElementById('fireworksCanvas'), x=c.getContext('2d'); c.width=window.innerWidth; c.height=window.innerHeight; let p=[]; for(let i=0;i<60;i++) p.push({x:c.width/2,y:c.height/2,vx:(Math.random()-.5)*12,vy:(Math.random()-.5)*12,c:`hsl(${Math.random()*360},100%,50%)`,a:1}); function anim(){ x.clearRect(0,0,c.width,c.height); p.forEach((k,i)=>{k.x+=k.vx;k.y+=k.vy;k.vy+=0.1;k.a-=0.02;x.globalAlpha=k.a;x.fillStyle=k.c;x.fillRect(k.x,k.y,4,4);if(k.a<=0)p.splice(i,1)}); if(p.length)requestAnimationFrame(anim); } anim(); }
+        function importData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const json = JSON.parse(e.target.result); if(json.config) localStorage.setItem('wt_config', JSON.stringify(json.config)); if(json.rewards) localStorage.setItem('wt_rewards', JSON.stringify(json.rewards)); if(json.rpg) localStorage.setItem('wt_rpg', JSON.stringify(json.rpg)); if(json.currentWeek) localStorage.setItem('wt_week', JSON.stringify(json.currentWeek)); if(json.archive) localStorage.setItem('wt_archive', JSON.stringify(json.archive)); alert("Data imported!"); location.reload(); } catch(err) { alert("Import error."); } }; reader.readAsText(file); }
+        
+        // UPDATED FIREWORKS (Random Position)
+        function triggerFireworks(x, y) { 
+            const c=document.getElementById('fireworksCanvas'), cx=c.getContext('2d'); 
+            c.width=window.innerWidth; c.height=window.innerHeight; 
+            let startX = x || c.width/2; let startY = y || c.height/2;
+            let p=[]; for(let i=0;i<60;i++) p.push({x:startX, y:startY, vx:(Math.random()-.5)*12, vy:(Math.random()-.5)*12, c:`hsl(${Math.random()*360},100%,50%)`, a:1}); 
+            function anim(){ cx.clearRect(0,0,c.width,c.height); p.forEach((k,i)=>{k.x+=k.vx;k.y+=k.vy;k.vy+=0.1;k.a-=0.02;cx.globalAlpha=k.a;cx.fillStyle=k.c;cx.fillRect(k.x,k.y,4,4);if(k.a<=0)p.splice(i,1)}); if(p.length)requestAnimationFrame(anim); } anim(); 
+        }
 
         init();
     </script>
