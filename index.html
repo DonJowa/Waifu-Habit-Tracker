@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Waifu Tracker: V82 No Glow Fix</title>
+    <title>Waifu Tracker: V84 Negative Count Fix</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -639,9 +639,10 @@
             }, 500); // Match transition duration
         }
 
-        // --- SLOTS LOGIC ---
+        // --- SLOTS LOGIC V84 (Immediate Update Fix) ---
         function moveToSlot(e, category, type, imgSrc, bgClass) {
             const count = rewards[category][type];
+            // 1. Immediate Check
             if(count <= 0) { alert("You don't have any of this card left in inventory!"); return; }
 
             const cardElement = e.currentTarget;
@@ -659,8 +660,15 @@
                 return;
             }
 
+            // 2. IMMEDIATE DEDUCTION & UPDATE
+            rewards[category][type]--;
+            // Force update the specific counter immediately to prevent multi-click race condition
+            const prefix = category === 'nonut' ? 'nn' : 'sl';
+            document.getElementById(`${prefix}-${type}-count`).innerText = rewards[category][type];
+
             const targetSlotEl = document.getElementById('slot-' + targetSlotIndex);
 
+            // 3. Animation
             flyItem(cardElement, targetSlotEl, imgSrc, () => {
                 if (existingSlotIndex !== -1) {
                     equippedSlots[existingSlotIndex].count++;
@@ -669,7 +677,7 @@
                         category: category, type: type, img: imgSrc, bg: bgClass, count: 1 
                     };
                 }
-                rewards[category][type]--;
+                // Save and full render after animation ends
                 save();
                 renderRewards();
             });
@@ -678,14 +686,26 @@
         function returnFromSlot(index) {
             const slot = equippedSlots[index];
             if (!slot) return;
+            if (slot.count <= 0) return; // Safety
 
             const slotEl = document.getElementById('slot-' + index);
-            const targetCardId = `card-${slot.category === 'nonut' ? 'nn' : 'sl'}-${slot.type}`;
+            const prefix = slot.category === 'nonut' ? 'nn' : 'sl';
+            const targetCardId = `card-${prefix}-${slot.type}`;
             const targetCardEl = document.getElementById(targetCardId);
+            
+            // IMMEDIATE LOGIC
+            slot.count--; 
+            rewards[slot.category][slot.type]++;
+            // Update card counter immediately
+            const counterEl = document.getElementById(`${prefix}-${slot.type}-count`);
+            if(counterEl) counterEl.innerText = rewards[slot.category][slot.type];
+            
+            // Temporarily update slot stack visually if > 0
+            if (slot.count > 0) {
+                 slotEl.querySelector('.slot-stack').innerText = `x${slot.count}`;
+            }
 
             flyItem(slotEl, targetCardEl, slot.img, () => {
-                rewards[slot.category][slot.type]++;
-                slot.count--;
                 if (slot.count <= 0) {
                     equippedSlots[index] = null;
                 }
@@ -838,6 +858,8 @@
             document.getElementById('panicModal').style.display = 'flex'; 
             if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
             currentAudio = new Audio(fileToPlay);
+            // RESTORED AUTO-CLOSE FOR PANIC ONLY
+            currentAudio.onended = function() { stopPanic(); };
             currentAudio.play();
         }
         function stopPanic() { document.getElementById('panicModal').style.display = 'none'; stopAudio(); }
@@ -1017,10 +1039,8 @@
             currentWeek[i].sleep = v; 
             save(); 
             renderLog(); 
-            // checkDayCompletion(i); Removed duplicate call since addXP handles feedback
         }
         
-        // Pass 'nonut' category
         function setKept(i, v) { 
             if(currentWeek[i].kept === null) { 
                 if(!currentWeek[i].allowed && v === true) addXP(25, 'nonut'); 
@@ -1029,7 +1049,6 @@
             currentWeek[i].kept = v; 
             save(); 
             renderLog(); 
-            // checkDayCompletion(i); 
         }
         
         function resetDay(i, type) { if(type === 'sleep') currentWeek[i].sleep = null; if(type === 'kept') currentWeek[i].kept = null; save(); renderLog(); }
