@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Waifu Tracker: V62 Snappy Audio</title>
+    <title>Waifu Tracker: V65 Padding Fix</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -39,7 +39,8 @@
             color: var(--text-color);
             margin: 0;
             padding: 15px;
-            padding-bottom: 300px;
+            /* MODIFIED: Reduced from 300px to 50px to remove excessive bottom gap */
+            padding-bottom: 50px; 
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -72,7 +73,12 @@
         .tab-btn.active { background: rgba(255, 255, 255, 0.15); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); text-shadow: 0 0 5px rgba(255,255,255,0.5); }
         @media (max-width: 400px) { .tab-btn { font-size: 0.75rem; padding: 10px 0; } .tab-btn:last-child { font-size: 1.1rem; } }
 
-        .content-section { display: none; width: 100%; max-width: 600px; animation: fadeIn 0.3s ease; padding-bottom: 400px; }
+        .content-section { 
+            display: none; width: 100%; max-width: 600px; animation: fadeIn 0.3s ease; 
+            /* MODIFIED: Reduced from 400px to 220px. 
+               This is enough space for Chibi (120px) + Bubble (~80px) + Gap without leaving huge empty space */
+            padding-bottom: 220px; 
+        }
         .content-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -168,6 +174,19 @@
             background-size: cover; background-position: center; background-color: #222;
         }
         .waifu-card:hover { transform: translateY(-12px) scale(1.03); z-index: 10; box-shadow: 0 15px 30px rgba(0,0,0,0.7); border-color: #fff; }
+        
+        /* EQUIPPED STYLE */
+        .waifu-card.equipped {
+            border: 2px solid #fff;
+            box-shadow: 0 0 15px var(--gold), 0 0 30px var(--gold);
+            animation: equip-pulse 2s infinite;
+        }
+        @keyframes equip-pulse {
+            0% { box-shadow: 0 0 15px var(--gold); border-color: #fff; }
+            50% { box-shadow: 0 0 25px var(--gold), 0 0 10px #fff; border-color: var(--gold); }
+            100% { box-shadow: 0 0 15px var(--gold); border-color: #fff; }
+        }
+
         .bg-common { background-image: url('card_common.jpg'); border-color: #888; }
         .bg-rare { background-image: url('card_rare.jpg'); border-color: var(--gold); }
         .bg-legendary { background-image: url('card_legendary.jpg'); border-color: var(--legendary); }
@@ -314,9 +333,9 @@
         <div id="module-nonut">
             <h3 style="color:var(--accent-nn); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">No Nut-chan</h3>
             <div class="waifu-grid">
-                <div class="waifu-card bg-common" id="card-nn-special" onclick="equipWaifu('panic_button.png', 'card-nn-special')"><span id="nn-special-count" class="waifu-count count-special">0</span><img src="special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special (Equip)</div></div></div>
-                <div class="waifu-card bg-rare" id="card-nn-shiny" onclick="equipWaifu('shiny.png', 'card-nn-shiny')"><span id="nn-shiny-count" class="waifu-count count-shiny">0</span><img src="shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny (Equip)</div></div></div>
-                <div class="waifu-card bg-legendary" id="card-nn-legendary" onclick="equipWaifu('legendary.png', 'card-nn-legendary')"><span id="nn-legendary-count" class="waifu-count count-legendary">0</span><img src="legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary (Equip)</div></div></div>
+                <div class="waifu-card bg-common" id="card-nn-special" onclick="equipWaifu('special.png', 'card-nn-special')"><span id="nn-special-count" class="waifu-count count-special">0</span><img src="special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
+                <div class="waifu-card bg-rare" id="card-nn-shiny" onclick="equipWaifu('shiny.png', 'card-nn-shiny')"><span id="nn-shiny-count" class="waifu-count count-shiny">0</span><img src="shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
+                <div class="waifu-card bg-legendary" id="card-nn-legendary" onclick="equipWaifu('legendary.png', 'card-nn-legendary')"><span id="nn-legendary-count" class="waifu-count count-legendary">0</span><img src="legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
             </div>
             <div class="trade-box">
                 <div class="trade-header">Card Exchange</div>
@@ -334,9 +353,9 @@
         <div id="module-sleep" style="margin-top:40px;">
             <h3 style="color:var(--accent-sleep); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Sleep-chan</h3>
             <div class="waifu-grid">
-                <div class="waifu-card bg-common" id="card-sl-special" onclick="equipWaifu('sleep_special.png', 'card-sl-special')"><span id="sl-special-count" class="waifu-count count-special">0</span><img src="sleep_special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special (Equip)</div></div></div>
-                <div class="waifu-card bg-rare" id="card-sl-shiny" onclick="equipWaifu('sleep_shiny.png', 'card-sl-shiny')"><span id="sl-shiny-count" class="waifu-count count-shiny">0</span><img src="sleep_shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny (Equip)</div></div></div>
-                <div class="waifu-card bg-legendary" id="card-sl-legendary" onclick="equipWaifu('sleep_legendary.png', 'card-sl-legendary')"><span id="sl-legendary-count" class="waifu-count count-legendary">0</span><img src="sleep_legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary (Equip)</div></div></div>
+                <div class="waifu-card bg-common" id="card-sl-special" onclick="equipWaifu('sleep_special.png', 'card-sl-special')"><span id="sl-special-count" class="waifu-count count-special">0</span><img src="sleep_special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
+                <div class="waifu-card bg-rare" id="card-sl-shiny" onclick="equipWaifu('sleep_shiny.png', 'card-sl-shiny')"><span id="sl-shiny-count" class="waifu-count count-shiny">0</span><img src="sleep_shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
+                <div class="waifu-card bg-legendary" id="card-sl-legendary" onclick="equipWaifu('sleep_legendary.png', 'card-sl-legendary')"><span id="sl-legendary-count" class="waifu-count count-legendary">0</span><img src="sleep_legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
             </div>
             <div class="trade-box">
                 <div class="trade-header">Card Exchange</div>
@@ -412,7 +431,7 @@
         const titles = ["Novice", "Beginner", "Apprentice", "Disciplined", "Guardian", "Knight", "Elite", "Master", "Grandmaster", "Legend", "Mythic", "Godlike"];
         
         const audioFiles = ['voice1.mp3', 'voice2.mp3', 'voice3.mp3', 'voice4.mp3', 'voice5.mp3']; 
-        const successAudioFiles = ['success1.mp3', 'success2.mp3', 'success3.mp3', 'success4.mp3', 'success5.mp3'];
+        const successAudioFiles = ['success1.mp3', 'success2.mp3', 'success3.mp3', 'success4.mp3'];
         
         // 15 REWARD IMAGES
         const rewardImages = [];
@@ -523,7 +542,7 @@
             });
         }
 
-        // --- EQUIP LOGIC ---
+        // --- EQUIP LOGIC (MODIFIED FOR TOGGLE) ---
         function equipWaifu(imgSrc, cardId) {
             let count = 0;
             if(cardId.includes('nn-special')) count = rewards.nonut.special;
@@ -533,8 +552,29 @@
             if(cardId.includes('sl-shiny')) count = rewards.sleep.shiny;
             if(cardId.includes('sl-legendary')) count = rewards.sleep.legendary;
 
-            if(count > 0) { equipped.waifu = imgSrc; equipped.cardId = cardId; document.getElementById('fabImg').src = imgSrc; save(); updateEquipUI(); alert("Companion Equipped!"); } 
-            else { alert("You need to collect this card first!"); }
+            if(count > 0) { 
+                // CHECK IF ALREADY EQUIPPED (TOGGLE LOGIC)
+                if(equipped.cardId === cardId) {
+                    // Unequip
+                    equipped.waifu = 'panic_button.png'; // Reset to default base
+                    equipped.cardId = null;
+                    save(); 
+                    updateEquipUI(); 
+                    alert("Unequipped!"); 
+                    updateFabState(); // Will switch to reward_button if applicable
+                } else {
+                    // Equip
+                    equipped.waifu = imgSrc; 
+                    equipped.cardId = cardId; 
+                    document.getElementById('fabImg').src = imgSrc; 
+                    save(); 
+                    updateEquipUI(); 
+                    alert("Companion Equipped!"); 
+                    updateFabState(); 
+                }
+            } else { 
+                alert("You need to collect this card first!"); 
+            }
         }
 
         function updateEquipUI() {
@@ -595,15 +635,18 @@
             bubble.style.display = 'block';
 
             if(config.modules.nonut && config.allowedDays.includes(appDay)) {
-                // If default panic is equipped, switch to reward icon temporarily
+                // REWARD DAY LOGIC
+                // If nothing special equipped (panic_button.png), show reward button
                 if(equipped.waifu === 'panic_button.png') img.src = 'reward_button.png'; 
-                else img.src = equipped.waifu; // Keep equipped waifu
+                else img.src = equipped.waifu; 
                 
                 btn.onclick = triggerReward;
                 startQuoteRotation(rewardLines);
             } else {
-                if(equipped.waifu === 'reward_button.png') img.src = 'panic_button.png'; 
-                else img.src = equipped.waifu; // Keep equipped waifu
+                // NORMAL DAY LOGIC
+                // If nothing special equipped, show panic button (default is panic_button.png)
+                if(equipped.waifu === 'reward_button.png') img.src = 'panic_button.png';
+                else img.src = equipped.waifu; 
                 
                 btn.onclick = triggerPanic;
                 startQuoteRotation(panicLines);
@@ -617,7 +660,14 @@
             if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
             currentAudio = new Audio(file);
             const p = currentAudio.play();
-            if (p !== undefined) { p.then(_ => { currentAudio.onended = function() { document.getElementById(modalId).style.display = 'none'; }; }).catch(error => { setTimeout(() => { document.getElementById(modalId).style.display = 'none'; }, 1500); }); }
+            if (p !== undefined) { 
+                p.then(_ => { 
+                    currentAudio.onended = function() { document.getElementById(modalId).style.display = 'none'; }; 
+                }).catch(error => { 
+                    console.log("Audio play failed (missing file?):", file);
+                    setTimeout(() => { document.getElementById(modalId).style.display = 'none'; }, 1500); 
+                }); 
+            }
         }
         function stopAudio() { if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; } }
 
