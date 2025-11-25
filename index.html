@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Waifu Tracker: V69 Gallery Fix</title>
+    <title>Waifu Tracker: V81 Count Fix</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -162,28 +162,44 @@
         .summary-view { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 8px; }
         .edit-btn { background: transparent; border: 1px solid #555; padding: 5px 10px; font-size: 0.8rem; }
 
+        /* SLOTS SYSTEM (3 Slots) */
+        .slots-container {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 8px; margin-bottom: 20px;
+            background: rgba(20,20,20,0.6); padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .slot-box {
+            aspect-ratio: 1; background: #222; border: 2px dashed #444; border-radius: 8px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer; position: relative; overflow: hidden; transition: all 0.1s;
+            background-size: cover; background-position: center;
+        }
+        .slot-box:hover { transform: scale(1.05); }
+        .slot-box:active { transform: scale(0.95); }
+        .slot-box.filled { border-style: solid; border-color: #fff; }
+        
+        /* SLOT BACKGROUNDS */
+        .slot-bg-common { background-image: url('card_common.jpg'); border-color: #888 !important; }
+        .slot-bg-rare { background-image: url('card_rare.jpg'); border-color: var(--gold) !important; }
+        .slot-bg-legendary { background-image: url('card_legendary.jpg'); border-color: var(--legendary) !important; box-shadow: 0 0 10px var(--legendary); }
+
+        .slot-icon { width: 85%; height: 85%; object-fit: contain; filter: drop-shadow(0 0 5px rgba(0,0,0,0.8)); z-index: 2; }
+        .slot-stack { position: absolute; bottom: 2px; right: 4px; font-size: 0.9rem; font-weight: 900; color: white; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; z-index: 3; }
+        .slot-bonus { position: absolute; top: 2px; left: 2px; font-size: 0.6rem; color: #00e676; font-weight: 900; text-shadow: 1px 1px 0 #000; z-index: 3; background: rgba(0,0,0,0.5); padding: 1px 3px; border-radius: 4px;}
+        
+        .xp-boost-total { text-align: center; font-size: 0.9rem; color: var(--success); margin-bottom: 10px; font-weight: bold; text-shadow: 0 0 10px rgba(0, 200, 83, 0.3); }
+
         /* WAIFU CARDS */
         .waifu-grid { display: flex; gap: 20px; overflow-x: auto; padding: 25px 10px 40px 10px; scrollbar-width: none; }
         .waifu-card { 
             flex: 0 0 170px; height: 260px; padding: 0; border-radius: 14px; border: 1px solid #444;
             text-align: center; position: relative; overflow: hidden; cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: transform 0.1s ease, box-shadow 0.3s ease;
             background-size: cover; background-position: center; background-color: #222;
         }
+        .waifu-card:active { transform: scale(0.98) translateY(-10px); }
         .waifu-card:hover { transform: translateY(-12px) scale(1.03); z-index: 10; box-shadow: 0 15px 30px rgba(0,0,0,0.7); border-color: #fff; }
         
-        /* EQUIPPED STYLE */
-        .waifu-card.equipped {
-            border: 2px solid #fff;
-            box-shadow: 0 0 15px var(--gold), 0 0 30px var(--gold);
-            animation: equip-pulse 2s infinite;
-        }
-        @keyframes equip-pulse {
-            0% { box-shadow: 0 0 15px var(--gold); border-color: #fff; }
-            50% { box-shadow: 0 0 25px var(--gold), 0 0 10px #fff; border-color: var(--gold); }
-            100% { box-shadow: 0 0 15px var(--gold); border-color: #fff; }
-        }
-
         .bg-common { background-image: url('card_common.jpg'); border-color: #888; }
         .bg-rare { background-image: url('card_rare.jpg'); border-color: var(--gold); }
         .bg-legendary { background-image: url('card_legendary.jpg'); border-color: var(--legendary); }
@@ -246,15 +262,49 @@
         .gallery-item.locked { opacity: 0.5; border-style: dashed; }
         .gallery-item.unlocked { cursor: pointer; border-color: var(--gold); }
         .gallery-item.unlocked:hover { transform: scale(1.05); }
-        /* MODIFIED: Changed from contain to cover to fill the square */
         .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
         .lock-icon { font-size: 1.2rem; color: #555; }
 
+        /* ANIMATION: FLYING CARD */
+        .flying-card {
+            position: fixed; pointer-events: none; z-index: 9999;
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: cover;
+        }
+
         /* MODALS */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
-        .modal img { max-width: 100%; max-height: 80vh; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 0 50px rgba(255,255,255,0.2); border-radius: 15px; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; flex-direction: column; }
+        .modal img { max-width: 100%; max-height: 80vh; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 15px; }
         @keyframes popIn { from { transform: scale(0.8); } to { transform: scale(1); } }
         
+        /* NEW: INTEGRATED REWARD OVERLAY */
+        .reward-overlay {
+            position: absolute;
+            bottom: 10%; /* Placed near bottom over character */
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid var(--gold);
+            color: #fff;
+            text-align: center;
+            min-width: 80%;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            animation: slideUpFade 0.5s ease;
+            z-index: 10001;
+            font-size: 1.1rem;
+            white-space: pre-line;
+            pointer-events: none; /* Let click pass through to modal wrapper */
+        }
+        @keyframes slideUpFade { from { opacity:0; transform: translate(-50%, 20px); } to { opacity:1; transform: translate(-50%, 0); } }
+        
+        .reward-title { color: var(--gold); font-weight: 900; font-size: 1.4rem; margin-bottom: 10px; display:block; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 2px 2px rgba(0,0,0,0.8); }
+        .reward-item { margin: 5px 0; font-weight: bold; font-size: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 2px; }
+        .reward-item:last-child { border-bottom: none; }
+        .tap-hint { font-size: 0.8rem; color: #aaa; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; animation: blink 2s infinite; }
+        @keyframes blink { 0% { opacity:0.5; } 50% { opacity:1; } 100% { opacity:0.5; } }
+
         /* PANIC/SUCCESS MODALS */
         #panicModal, #successModal, #weeklyModal, #rewardModal { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); z-index: 9999; display: none; justify-content: center; align-items: center; }
         #panicImg, #successImg, #weeklyImg, #rewardImg { max-height: 85vh; max-width: 95vw; border: none; background: transparent; box-shadow: none; }
@@ -299,8 +349,19 @@
     <!-- MODALS -->
     <div id="imgModal" class="modal" onclick="this.style.display='none'"><img id="modalImg" src=""></div>
     <div id="panicModal" class="modal" onclick="stopPanic()"><img id="panicImg" src="panic.png" alt="Panic!"></div>
-    <div id="successModal" class="modal" onclick="stopSuccess()"><img id="successImg" src="success.png" alt="Success!"></div>
-    <div id="weeklyModal" class="modal" onclick="stopWeekly()"><img id="weeklyImg" src="weekly.png" alt="Weekly Victory!"></div>
+    
+    <!-- SUCCESS MODAL WITH OVERLAY -->
+    <div id="successModal" class="modal" onclick="stopSuccess()">
+        <img id="successImg" src="success.png" alt="Success!">
+        <div id="successText" class="reward-overlay" style="display:none;"></div>
+    </div>
+    
+    <!-- WEEKLY MODAL WITH OVERLAY -->
+    <div id="weeklyModal" class="modal" onclick="stopWeekly()">
+        <img id="weeklyImg" src="weekly.png" alt="Weekly Victory!">
+        <div id="weeklyText" class="reward-overlay" style="display:none;"></div>
+    </div>
+    
     <div id="rewardModal" class="modal" onclick="stopReward()"><img id="rewardImg" src="reward1.png" alt="Reward!"></div>
 
     <div class="rpg-header">
@@ -328,12 +389,18 @@
 
     <!-- REWARDS SECTION -->
     <div id="rewards" class="content-section">
+        <!-- NEW SLOTS SYSTEM -->
+        <div class="xp-boost-total" id="xp-boost-display">Total: 🚫 +0% XP | 💤 +0% XP</div>
+        <div class="slots-container" id="slots-grid">
+            <!-- Slots generated via JS -->
+        </div>
+
         <div id="module-nonut">
             <h3 style="color:var(--accent-nn); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">No Nut-chan</h3>
             <div class="waifu-grid">
-                <div class="waifu-card bg-common" id="card-nn-special" onclick="equipWaifu('special.png', 'card-nn-special')"><span id="nn-special-count" class="waifu-count count-special">0</span><img src="special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
-                <div class="waifu-card bg-rare" id="card-nn-shiny" onclick="equipWaifu('shiny.png', 'card-nn-shiny')"><span id="nn-shiny-count" class="waifu-count count-shiny">0</span><img src="shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
-                <div class="waifu-card bg-legendary" id="card-nn-legendary" onclick="equipWaifu('legendary.png', 'card-nn-legendary')"><span id="nn-legendary-count" class="waifu-count count-legendary">0</span><img src="legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
+                <div class="waifu-card bg-common" id="card-nn-special" onclick="moveToSlot(event, 'nonut', 'special', 'special.png', 'slot-bg-common')"><span id="nn-special-count" class="waifu-count count-special">0</span><img src="special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
+                <div class="waifu-card bg-rare" id="card-nn-shiny" onclick="moveToSlot(event, 'nonut', 'shiny', 'shiny.png', 'slot-bg-rare')"><span id="nn-shiny-count" class="waifu-count count-shiny">0</span><img src="shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
+                <div class="waifu-card bg-legendary" id="card-nn-legendary" onclick="moveToSlot(event, 'nonut', 'legendary', 'legendary.png', 'slot-bg-legendary')"><span id="nn-legendary-count" class="waifu-count count-legendary">0</span><img src="legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
             </div>
             <div class="trade-box">
                 <div class="trade-header">Card Exchange</div>
@@ -351,9 +418,9 @@
         <div id="module-sleep" style="margin-top:40px;">
             <h3 style="color:var(--accent-sleep); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Sleep-chan</h3>
             <div class="waifu-grid">
-                <div class="waifu-card bg-common" id="card-sl-special" onclick="equipWaifu('sleep_special.png', 'card-sl-special')"><span id="sl-special-count" class="waifu-count count-special">0</span><img src="sleep_special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
-                <div class="waifu-card bg-rare" id="card-sl-shiny" onclick="equipWaifu('sleep_shiny.png', 'card-sl-shiny')"><span id="sl-shiny-count" class="waifu-count count-shiny">0</span><img src="sleep_shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
-                <div class="waifu-card bg-legendary" id="card-sl-legendary" onclick="equipWaifu('sleep_legendary.png', 'card-sl-legendary')"><span id="sl-legendary-count" class="waifu-count count-legendary">0</span><img src="sleep_legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
+                <div class="waifu-card bg-common" id="card-sl-special" onclick="moveToSlot(event, 'sleep', 'special', 'sleep_special.png', 'slot-bg-common')"><span id="sl-special-count" class="waifu-count count-special">0</span><img src="sleep_special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
+                <div class="waifu-card bg-rare" id="card-sl-shiny" onclick="moveToSlot(event, 'sleep', 'shiny', 'sleep_shiny.png', 'slot-bg-rare')"><span id="sl-shiny-count" class="waifu-count count-shiny">0</span><img src="sleep_shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
+                <div class="waifu-card bg-legendary" id="card-sl-legendary" onclick="moveToSlot(event, 'sleep', 'legendary', 'sleep_legendary.png', 'slot-bg-legendary')"><span id="sl-legendary-count" class="waifu-count count-legendary">0</span><img src="sleep_legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
             </div>
             <div class="trade-box">
                 <div class="trade-header">Card Exchange</div>
@@ -435,7 +502,7 @@
         const rewardImages = [];
         for(let i=1; i<=15; i++) rewardImages.push(`reward${i}.png`);
         
-        // NEW: 21 REWARD VOICES
+        // 21 REWARD VOICES
         const rewardVoiceFiles = [];
         for(let i=1; i<=21; i++) rewardVoiceFiles.push(`reward_voice${i}.mp3`);
         
@@ -476,7 +543,9 @@
         let rewards = { nonut:{special:0,shiny:0,legendary:0,streak:0}, sleep:{special:0,shiny:0,legendary:0,streak:0}, lifetime_legendaries: 0 };
         let rpg = { xp: 0 }; 
         let unlocks = { themes: [], gallery: [] }; 
-        let equipped = { waifu: 'panic_button.png', cardId: null, theme: '' };
+        // NEW SLOTS SYSTEM (Array of 3 items)
+        let equippedSlots = [null, null, null];
+        let equipped = { theme: '' };
         let currentWeek = [], archive = [];
         let currentAudio = null;
         let quoteInterval = null;
@@ -491,24 +560,33 @@
             if(localStorage.getItem('wt_rewards')) {
                 let r = JSON.parse(localStorage.getItem('wt_rewards'));
                 if(r.lifetime_legendaries === undefined) r.lifetime_legendaries = r.nonut.legendary + r.sleep.legendary;
+                // Ensure counters exist for new drop logic
+                if(r.nonut && r.nonut.totalDrops === undefined) { r.nonut.totalDrops = 0; r.nonut.dropCounter = 0; }
+                if(r.sleep && r.sleep.totalDrops === undefined) { r.sleep.totalDrops = 0; r.sleep.dropCounter = 0; }
                 rewards = r;
             }
             if(localStorage.getItem('wt_rpg')) rpg = JSON.parse(localStorage.getItem('wt_rpg'));
             if(localStorage.getItem('wt_unlocks')) {
                 unlocks = JSON.parse(localStorage.getItem('wt_unlocks'));
-                if(!unlocks.gallery) unlocks.gallery = []; // Ensure gallery exists
+                if(!unlocks.gallery) unlocks.gallery = []; 
+            }
+            if(localStorage.getItem('wt_slots')) {
+                equippedSlots = JSON.parse(localStorage.getItem('wt_slots'));
+                // SAFETY: Ensure max 3 slots if old data exists
+                if(equippedSlots.length > 3) {
+                    equippedSlots = equippedSlots.slice(0, 3);
+                    save();
+                }
             }
             if(localStorage.getItem('wt_equipped')) equipped = JSON.parse(localStorage.getItem('wt_equipped'));
+            
             if(localStorage.getItem('wt_week')) currentWeek = JSON.parse(localStorage.getItem('wt_week'));
             else initWeek();
             if(localStorage.getItem('wt_archive')) archive = JSON.parse(localStorage.getItem('wt_archive'));
 
-            // APPLY SAVED THEME & WAIFU
             applyTheme(equipped.theme, false);
             if(config.activeTheme) document.body.className = config.activeTheme;
-            document.getElementById('fabImg').src = equipped.waifu;
-            updateEquipUI();
-
+            
             updateFabState();
             renderLog(); renderRewards(); renderSettingsUI(); renderRPG(); renderStats(); updateThemeUI(); renderGallery();
         }
@@ -525,6 +603,127 @@
             localStorage.setItem('wt_rpg', JSON.stringify(rpg));
             localStorage.setItem('wt_unlocks', JSON.stringify(unlocks));
             localStorage.setItem('wt_equipped', JSON.stringify(equipped));
+            localStorage.setItem('wt_slots', JSON.stringify(equippedSlots));
+        }
+
+        // --- ANIMATION UTILS ---
+        function flyItem(startEl, endEl, imgSrc, callback) {
+            if(!startEl || !endEl) {
+                if(callback) callback();
+                return;
+            }
+            const startRect = startEl.getBoundingClientRect();
+            const endRect = endEl.getBoundingClientRect();
+
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.className = 'flying-card';
+            img.style.width = startRect.width + 'px';
+            img.style.height = startRect.height + 'px';
+            img.style.top = startRect.top + 'px';
+            img.style.left = startRect.left + 'px';
+            document.body.appendChild(img);
+
+            // Trigger reflow
+            void img.offsetWidth;
+
+            img.style.top = endRect.top + 'px';
+            img.style.left = endRect.left + 'px';
+            img.style.width = endRect.width + 'px';
+            img.style.height = endRect.height + 'px';
+
+            setTimeout(() => {
+                img.remove();
+                if(callback) callback();
+            }, 500); // Match transition duration
+        }
+
+        // --- SLOTS LOGIC ---
+        function moveToSlot(e, category, type, imgSrc, bgClass) {
+            const count = rewards[category][type];
+            if(count <= 0) { alert("You don't have any of this card left in inventory!"); return; }
+
+            const cardElement = e.currentTarget;
+            let targetSlotIndex = -1;
+            let existingSlotIndex = equippedSlots.findIndex(s => s && s.category === category && s.type === type);
+            
+            if (existingSlotIndex !== -1) {
+                targetSlotIndex = existingSlotIndex;
+            } else {
+                targetSlotIndex = equippedSlots.findIndex(s => s === null);
+            }
+
+            if (targetSlotIndex === -1) {
+                alert("All 3 slots are full! Tap a slot to remove a card first.");
+                return;
+            }
+
+            const targetSlotEl = document.getElementById('slot-' + targetSlotIndex);
+
+            flyItem(cardElement, targetSlotEl, imgSrc, () => {
+                if (existingSlotIndex !== -1) {
+                    equippedSlots[existingSlotIndex].count++;
+                } else {
+                    equippedSlots[targetSlotIndex] = { 
+                        category: category, type: type, img: imgSrc, bg: bgClass, count: 1 
+                    };
+                }
+                rewards[category][type]--;
+                save();
+                renderRewards();
+            });
+        }
+
+        function returnFromSlot(index) {
+            const slot = equippedSlots[index];
+            if (!slot) return;
+
+            const slotEl = document.getElementById('slot-' + index);
+            const targetCardId = `card-${slot.category === 'nonut' ? 'nn' : 'sl'}-${slot.type}`;
+            const targetCardEl = document.getElementById(targetCardId);
+
+            flyItem(slotEl, targetCardEl, slot.img, () => {
+                rewards[slot.category][slot.type]++;
+                slot.count--;
+                if (slot.count <= 0) {
+                    equippedSlots[index] = null;
+                }
+                save();
+                renderRewards();
+            });
+        }
+
+        function calculateSlotBonus(slot) {
+            if(!slot) return 0;
+            const count = slot.count;
+            if (count === 0) return 0;
+
+            if (slot.type === 'special') {
+                return 3 + Math.floor(count / 5);
+            } else if (slot.type === 'shiny') {
+                return 5 + Math.floor(count / 2);
+            } else if (slot.type === 'legendary') {
+                return 8 + ((count - 1) * 3); 
+            }
+            return 0;
+        }
+
+        function getMultiplierForCategory(targetCategory) {
+            let total = 0;
+            equippedSlots.forEach(slot => {
+                if (slot && slot.category === targetCategory) {
+                    total += calculateSlotBonus(slot);
+                }
+            });
+            return total;
+        }
+
+        function getTotalMultiplier() {
+            let total = 0;
+            equippedSlots.forEach(slot => {
+                total += calculateSlotBonus(slot);
+            });
+            return total;
         }
 
         // --- GALLERY LOGIC ---
@@ -542,46 +741,6 @@
                 }
                 container.appendChild(div);
             });
-        }
-
-        // --- EQUIP LOGIC (MODIFIED FOR TOGGLE) ---
-        function equipWaifu(imgSrc, cardId) {
-            let count = 0;
-            if(cardId.includes('nn-special')) count = rewards.nonut.special;
-            if(cardId.includes('nn-shiny')) count = rewards.nonut.shiny;
-            if(cardId.includes('nn-legendary')) count = rewards.nonut.legendary;
-            if(cardId.includes('sl-special')) count = rewards.sleep.special;
-            if(cardId.includes('sl-shiny')) count = rewards.sleep.shiny;
-            if(cardId.includes('sl-legendary')) count = rewards.sleep.legendary;
-
-            if(count > 0) { 
-                // CHECK IF ALREADY EQUIPPED (TOGGLE LOGIC)
-                if(equipped.cardId === cardId) {
-                    // Unequip
-                    equipped.waifu = 'panic_button.png'; // Reset to default base
-                    equipped.cardId = null;
-                    save(); 
-                    updateEquipUI(); 
-                    alert("Unequipped!"); 
-                    updateFabState(); // Will switch to reward_button if applicable
-                } else {
-                    // Equip
-                    equipped.waifu = imgSrc; 
-                    equipped.cardId = cardId; 
-                    document.getElementById('fabImg').src = imgSrc; 
-                    save(); 
-                    updateEquipUI(); 
-                    alert("Companion Equipped!"); 
-                    updateFabState(); 
-                }
-            } else { 
-                alert("You need to collect this card first!"); 
-            }
-        }
-
-        function updateEquipUI() {
-            document.querySelectorAll('.waifu-card').forEach(c => c.classList.remove('equipped'));
-            if(equipped.cardId) { const el = document.getElementById(equipped.cardId); if(el) el.classList.add('equipped'); }
         }
 
         // --- THEMES ---
@@ -637,17 +796,11 @@
             bubble.style.display = 'block';
 
             if(config.modules.nonut && config.allowedDays.includes(appDay)) {
-                // REWARD DAY LOGIC
-                if(equipped.waifu === 'panic_button.png') img.src = 'reward_button.png'; 
-                else img.src = equipped.waifu; 
-                
+                img.src = 'reward_button.png'; 
                 btn.onclick = triggerReward;
                 startQuoteRotation(rewardLines);
             } else {
-                // NORMAL DAY LOGIC
-                if(equipped.waifu === 'reward_button.png') img.src = 'panic_button.png';
-                else img.src = equipped.waifu; 
-                
+                img.src = 'panic_button.png';
                 btn.onclick = triggerPanic;
                 startQuoteRotation(panicLines);
             }
@@ -659,15 +812,7 @@
             const file = fileArray[Math.floor(Math.random() * fileArray.length)];
             if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
             currentAudio = new Audio(file);
-            const p = currentAudio.play();
-            if (p !== undefined) { 
-                p.then(_ => { 
-                    currentAudio.onended = function() { document.getElementById(modalId).style.display = 'none'; }; 
-                }).catch(error => { 
-                    console.log("Audio play failed (missing file?):", file);
-                    setTimeout(() => { document.getElementById(modalId).style.display = 'none'; }, 1500); 
-                }); 
-            }
+            currentAudio.play().catch(e => console.log("Audio play error", e));
         }
         function stopAudio() { if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; } }
 
@@ -684,7 +829,6 @@
                 }
             }
             let fileToPlay = "";
-            // MODIFIED: Updated ranges to match new file counts
             if(daysLeft === 1) fileToPlay = `panic_1day_${Math.floor(Math.random() * 20) + 1}.mp3`;
             else if (daysLeft === 2) fileToPlay = `panic_2days_${Math.floor(Math.random() * 12) + 1}.mp3`;
             else if (daysLeft === 3) fileToPlay = `panic_3days_${Math.floor(Math.random() * 9) + 1}.mp3`;
@@ -693,19 +837,14 @@
             document.getElementById('panicModal').style.display = 'flex'; 
             if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
             currentAudio = new Audio(fileToPlay);
-            const p = currentAudio.play();
-            if (p !== undefined) { 
-                p.then(_ => { currentAudio.onended = function() { document.getElementById('panicModal').style.display = 'none'; }; })
-                 .catch(error => { console.log(error); setTimeout(() => { document.getElementById('panicModal').style.display = 'none'; }, 1500); }); 
-            }
+            currentAudio.play();
         }
         function stopPanic() { document.getElementById('panicModal').style.display = 'none'; stopAudio(); }
-        function triggerSuccess() { document.getElementById('successModal').style.display = 'flex'; triggerFireworks(window.innerWidth/2, window.innerHeight/2); playAudioWithFallback(successAudioFiles, 'successModal'); }
+        function triggerSuccess() { document.getElementById('successText').style.display = 'block'; document.getElementById('successModal').style.display = 'flex'; triggerFireworks(window.innerWidth/2, window.innerHeight/2); playAudioWithFallback(successAudioFiles, 'successModal'); }
         function stopSuccess() { document.getElementById('successModal').style.display = 'none'; stopAudio(); }
-        function triggerWeeklySuccess() { document.getElementById('weeklyModal').style.display = 'flex'; if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; } currentAudio = new Audio('weekly.mp3'); const p = currentAudio.play(); if(p!==undefined) p.catch(e=>{setTimeout(()=>{stopWeekly()},5000)}); let lc=0; const fl=setInterval(()=>{triggerFireworks(Math.random()*window.innerWidth, Math.random()*window.innerHeight*0.8);lc++;if(lc>15)clearInterval(fl)},300); }
+        function triggerWeeklySuccess() { document.getElementById('weeklyText').style.display = 'block'; document.getElementById('weeklyModal').style.display = 'flex'; if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; } currentAudio = new Audio('weekly.mp3'); currentAudio.play(); let lc=0; const fl=setInterval(()=>{triggerFireworks(Math.random()*window.innerWidth, Math.random()*window.innerHeight*0.8);lc++;if(lc>15)clearInterval(fl)},300); }
         function stopWeekly() { document.getElementById('weeklyModal').style.display = 'none'; stopAudio(); archive.push({date:new Date(), data:[...currentWeek]}); initWeek(); renderLog(); renderRewards(); renderStats(); }
         
-        // MODIFIED: New Reward Logic (Smart Gallery & Audio)
         function triggerReward() {
             document.getElementById('waifuBubble').style.display = 'none';
             const today = new Date().toLocaleDateString();
@@ -715,19 +854,10 @@
             if (saved.date === today && saved.img) {
                 selectedImg = saved.img;
             } else {
-                // Get images NOT in gallery
                 let available = rewardImages.filter(img => !unlocks.gallery.includes(img));
-                
-                // If all unlocked, use full pool
-                if (available.length === 0) {
-                    available = rewardImages;
-                }
-
-                // Random pick
+                if (available.length === 0) available = rewardImages;
                 selectedImg = available[Math.floor(Math.random() * available.length)];
-                
                 localStorage.setItem('wt_daily_reward', JSON.stringify({ date: today, img: selectedImg }));
-                
                 if(!unlocks.gallery.includes(selectedImg)) {
                     unlocks.gallery.push(selectedImg);
                     save();
@@ -736,12 +866,36 @@
             }
             document.getElementById('rewardImg').src = selectedImg;
             document.getElementById('rewardModal').style.display = 'flex';
-            
-            // Play random reward voice (new array)
             playAudioWithFallback(rewardVoiceFiles, 'rewardModal');
             triggerFireworks(window.innerWidth/2, window.innerHeight/2);
         }
         function stopReward() { document.getElementById('rewardModal').style.display = 'none'; document.getElementById('waifuBubble').style.display = 'block'; }
+
+        // --- DROP LOGIC (MODIFIED: 5th drop = Shiny) ---
+        function checkDayDrop(category) {
+            let r = rewards[category];
+            if(r.totalDrops === undefined) { r.totalDrops = 0; r.dropCounter = 0; }
+
+            r.dropCounter++;
+            
+            let threshold = 5; 
+            if (r.totalDrops < 5) threshold = 1; 
+            else if (r.totalDrops < 10) threshold = 3; 
+
+            if (r.dropCounter >= threshold) {
+                r.totalDrops++;
+                r.dropCounter = 0;
+                
+                if (r.totalDrops % 5 === 0) {
+                    r.shiny++;
+                    return 'shiny';
+                } else {
+                    r.special++;
+                    return 'special';
+                }
+            }
+            return null;
+        }
 
         function checkDayCompletion(i) {
             const d = currentWeek[i];
@@ -750,31 +904,64 @@
             if (sleepOk && nutOk) triggerSuccess();
         }
 
-        // --- TRADING & RPG ---
         function trade(category, type, cost) { let b = rewards[category]; if (b[type] >= cost) { if(confirm(`Trade ${cost} ${type} for 1 Legendary?`)) { b[type] -= cost; b.legendary++; rewards.lifetime_legendaries++; save(); renderRewards(); updateThemeUI(); triggerFireworks(window.innerWidth/2, window.innerHeight/2); alert("Trade Successful!"); } } else { alert(`Not enough ${type}!`); } }
-        function getLevelData(totalXP) { let l=1, c=300, r=totalXP; while(r>=c){r-=c; l++; c+=20;} return {level:l, currentXP:r, nextLevelCost:c}; }
         
-        function addXP(amount) { 
+        function getLevelData(totalXP) { 
+            let level = 1;
+            let cost = 100; 
+            let remaining = totalXP;
+            while (remaining >= cost) {
+                remaining -= cost;
+                level++;
+                cost += 10; 
+            }
+            return { level, currentXP: remaining, nextLevelCost: cost }; 
+        }
+        
+        // MODIFIED: Consistent Text
+        function addXP(amount, sourceCategory, silent = false) {
+            let boostPercent = 0;
+            if (sourceCategory) {
+                boostPercent = getMultiplierForCategory(sourceCategory);
+            }
+            
+            const totalAmount = Math.floor(amount * (1 + boostPercent / 100));
+
             const oldD = getLevelData(rpg.xp); 
-            rpg.xp += amount; 
+            rpg.xp += totalAmount; 
             const newD = getLevelData(rpg.xp); 
             
+            if (silent) {
+                save();
+                renderRPG();
+                return;
+            }
+
+            let msgHTML = `<span class="reward-title">SUCCESS!</span>+${totalAmount} XP`;
+            
+            const dropType = sourceCategory ? checkDayDrop(sourceCategory) : null;
+            if (dropType) {
+                const name = sourceCategory === 'nonut' ? 'No Nut-chan' : 'Sleep-chan';
+                const typeLabel = dropType === 'shiny' ? 'Shiny' : 'Special';
+                const icon = dropType === 'shiny' ? '✨' : (sourceCategory === 'nonut' ? '💖' : '💤');
+                // MODIFIED: Consistent Format
+                msgHTML += `<div class="reward-item" style="color:#fff">BONUS: ${icon} 1x ${typeLabel} ${name}</div>`;
+            }
+
             if (newD.level > oldD.level) { 
-                let itemsWon = [];
-                if(config.modules.nonut) {
-                    rewards.nonut.special++;
-                    itemsWon.push("💖 1x Special No Nut-chan");
-                }
-                if(config.modules.sleep) {
-                    rewards.sleep.special++;
-                    itemsWon.push("💤 1x Special Sleep-chan");
-                }
-                
-                save(); 
-                triggerFireworks(window.innerWidth/2, window.innerHeight/2); 
-                
-                alert(`LEVEL UP! You reached Level ${newD.level}!\n\nREWARDS:\n` + itemsWon.join("\n"));
-            } 
+                msgHTML += `<div class="reward-item" style="color:#00e5ff; margin-top:10px;">LEVEL UP! Lv ${newD.level}</div>`;
+                if(config.modules.nonut) { rewards.nonut.special++; msgHTML += `<div class="reward-item">💖 1x Special No Nut-chan</div>`; }
+                if(config.modules.sleep) { rewards.sleep.special++; msgHTML += `<div class="reward-item">💤 1x Special Sleep-chan</div>`; }
+                triggerFireworks(window.innerWidth/2, window.innerHeight/2);
+            }
+            
+            msgHTML += `<div class="tap-hint">(Tap to close)</div>`;
+            
+            document.getElementById('successText').innerHTML = msgHTML;
+            document.getElementById('successText').style.display = 'block'; 
+            document.getElementById('successModal').style.display = 'flex'; 
+            playAudioWithFallback(successAudioFiles, 'successModal');
+            
             save(); 
             renderRPG(); 
         }
@@ -824,90 +1011,119 @@
         
         function setSleep(i, v) { 
             if (currentWeek[i].sleep === null) { 
-                if (currentWeek[i].exempt || v <= config.targetWakeTime) addXP(20); 
+                if (currentWeek[i].exempt || v <= config.targetWakeTime) addXP(20, 'sleep'); 
             } 
             currentWeek[i].sleep = v; 
             save(); 
             renderLog(); 
-            checkDayCompletion(i); 
         }
         
-        // MODIFIED: XP LOGIC BALANCING
         function setKept(i, v) { 
             if(currentWeek[i].kept === null) { 
-                // Not allowed & Success (Resistance) = 25 XP
-                if(!currentWeek[i].allowed && v === true) addXP(25); 
-                // Allowed (Indulge OR Skip) = 10 XP (Balancing)
-                else if(currentWeek[i].allowed) addXP(10); 
+                if(!currentWeek[i].allowed && v === true) addXP(25, 'nonut'); 
+                else if(currentWeek[i].allowed) addXP(10, 'nonut'); 
             } 
             currentWeek[i].kept = v; 
             save(); 
             renderLog(); 
-            checkDayCompletion(i); 
         }
         
         function resetDay(i, type) { if(type === 'sleep') currentWeek[i].sleep = null; if(type === 'kept') currentWeek[i].kept = null; save(); renderLog(); }
 
-        // MODIFIED: Alert Text Consistency
         function archiveWeek() {
             let incomplete = false;
             for(let d of currentWeek) { if(config.modules.sleep && d.sleep === null) incomplete = true; if(config.modules.nonut && d.kept === null) incomplete = true; }
             if(incomplete) { if(!confirm("WARNING: Some active days are incomplete. Proceed?")) return; } else { if(!confirm("Archive week?")) return; }
-            let itemsWon = [], failReasons = [];
-            let gainedXP = 0;
+            
+            let msgHTML = `<span class="reward-title">WEEKLY REWARDS</span>`;
+            let hasRewards = false;
 
             if(config.modules.nonut) {
                 const nnReq = currentWeek.filter(d => !d.allowed);
                 if(nnReq.length > 0 && nnReq.every(d => d.kept === true)) {
-                    rewards.nonut.streak++; rewards.nonut.special++; 
-                    addXP(50); gainedXP += 50;
-                    itemsWon.push("💖 1x Special No Nut-chan (+50 XP)");
-                    if(rewards.nonut.streak > 0 && rewards.nonut.streak % 4 === 0) { rewards.nonut.shiny++; addXP(100); gainedXP += 100; itemsWon.push("✨ 1x Shiny No Nut-chan (+100 XP)"); }
-                    if(rewards.nonut.streak > 0 && rewards.nonut.streak % 8 === 0) { rewards.nonut.legendary++; rewards.lifetime_legendaries++; addXP(200); gainedXP += 200; itemsWon.push("👑 1x Legendary No Nut-chan (+200 XP)"); }
-                } else { rewards.nonut.streak = 0; failReasons.push("No-Nut Failed"); }
+                    rewards.nonut.streak++; rewards.nonut.special++; hasRewards = true;
+                    addXP(50, null, true); 
+                    msgHTML += `<div class="reward-item">💖 1x Special No Nut-chan (+50 XP)</div>`;
+                    if(rewards.nonut.streak > 0 && rewards.nonut.streak % 4 === 0) { rewards.nonut.shiny++; addXP(100, null, true); msgHTML += `<div class="reward-item" style="color:var(--gold)">✨ 1x Shiny No Nut-chan (+100 XP)</div>`; }
+                    if(rewards.nonut.streak > 0 && rewards.nonut.streak % 8 === 0) { rewards.nonut.legendary++; rewards.lifetime_legendaries++; addXP(200, null, true); msgHTML += `<div class="reward-item" style="color:var(--legendary)">👑 1x Legendary No Nut-chan (+200 XP)</div>`; }
+                } else { rewards.nonut.streak = 0; msgHTML += `<div class="reward-item" style="color:var(--fail)">No-Nut Streak Reset</div>`; }
             }
             if(config.modules.sleep) {
                 const slReq = currentWeek.filter(d => !d.exempt);
                 if(slReq.length > 0 && slReq.every(d => d.sleep !== null && d.sleep <= config.targetWakeTime)) {
-                    rewards.sleep.streak++; rewards.sleep.special++; 
-                    addXP(50); gainedXP += 50;
-                    itemsWon.push("💤 1x Special Sleep-chan (+50 XP)");
-                    if(rewards.sleep.streak > 0 && rewards.sleep.streak % 4 === 0) { rewards.sleep.shiny++; addXP(100); gainedXP += 100; itemsWon.push("✨ 1x Shiny Sleep-chan (+100 XP)"); }
-                    if(rewards.sleep.streak > 0 && rewards.sleep.streak % 8 === 0) { rewards.sleep.legendary++; rewards.lifetime_legendaries++; addXP(200); gainedXP += 200; itemsWon.push("👑 1x Legendary Sleep-chan (+200 XP)"); }
-                } else { rewards.sleep.streak = 0; failReasons.push("Sleep Failed"); }
+                    rewards.sleep.streak++; rewards.sleep.special++; hasRewards = true;
+                    addXP(50, null, true);
+                    msgHTML += `<div class="reward-item">💤 1x Special Sleep-chan (+50 XP)</div>`;
+                    if(rewards.sleep.streak > 0 && rewards.sleep.streak % 4 === 0) { rewards.sleep.shiny++; addXP(100, null, true); msgHTML += `<div class="reward-item" style="color:var(--gold)">✨ 1x Shiny Sleep-chan (+100 XP)</div>`; }
+                    if(rewards.sleep.streak > 0 && rewards.sleep.streak % 8 === 0) { rewards.sleep.legendary++; rewards.lifetime_legendaries++; addXP(200, null, true); msgHTML += `<div class="reward-item" style="color:var(--legendary)">👑 1x Legendary Sleep-chan (+200 XP)</div>`; }
+                } else { rewards.sleep.streak = 0; msgHTML += `<div class="reward-item" style="color:var(--fail)">Sleep Streak Reset</div>`; }
             }
             save(); 
-            if(itemsWon.length > 0) {
-                alert("CONGRATS! WEEKLY STREAK REWARDS:\n\n" + itemsWon.join("\n"));
+            
+            if(hasRewards) {
+                msgHTML += `<div class="tap-hint">(Tap to close)</div>`;
+                document.getElementById('weeklyText').innerHTML = msgHTML;
                 triggerWeeklySuccess();
             } else { 
-                alert("Better luck next week.\n" + failReasons.join("\n")); 
+                alert("Streak lost. Better luck next week."); 
                 archive.push({date:new Date(), data:[...currentWeek]}); initWeek(); renderLog(); renderRewards(); renderStats(); 
             }
         }
 
+        // NEW RENDER REWARDS WITH DYNAMIC BOOST TEXT
         function renderRewards() {
-            const nnDiv = document.getElementById('module-nonut');
-            const slDiv = document.getElementById('module-sleep');
-            if(config.modules.nonut) {
-                nnDiv.style.display = 'block';
-                document.getElementById('nn-special-count').innerText = rewards.nonut.special;
-                document.getElementById('nn-shiny-count').innerText = rewards.nonut.shiny;
-                document.getElementById('nn-legendary-count').innerText = rewards.nonut.legendary;
-                document.getElementById('nn-streak').innerText = rewards.nonut.streak;
-                updateBar('nn', rewards.nonut.streak);
-                let t=0; archive.forEach(w=>{const r=w.data.filter(d=>!d.allowed); if(r.length>0 && r.every(d=>d.kept===true)) t++;}); document.getElementById('nn-total').innerText = t;
-            } else { nnDiv.style.display = 'none'; }
-            if(config.modules.sleep) {
-                slDiv.style.display = 'block';
-                document.getElementById('sl-special-count').innerText = rewards.sleep.special;
-                document.getElementById('sl-shiny-count').innerText = rewards.sleep.shiny;
-                document.getElementById('sl-legendary-count').innerText = rewards.sleep.legendary;
-                document.getElementById('sl-streak').innerText = rewards.sleep.streak;
-                updateBar('sl', rewards.sleep.streak);
-                let t=0; archive.forEach(w=>{const r=w.data.filter(d=>!d.exempt); if(r.length>0 && r.every(d=>d.sleep!==null && d.sleep<=config.targetWakeTime)) t++;}); document.getElementById('sl-total').innerText = t;
-            } else { slDiv.style.display = 'none'; }
+            const slotsDiv = document.getElementById('slots-grid');
+            slotsDiv.innerHTML = '';
+            equippedSlots.forEach((slot, index) => {
+                const box = document.createElement('div');
+                box.id = 'slot-' + index;
+                box.className = slot ? `slot-box filled ${slot.bg}` : 'slot-box';
+                
+                if (slot) {
+                    const bonus = calculateSlotBonus(slot);
+                    box.innerHTML = `
+                        <img src="${slot.img}" class="slot-icon">
+                        <span class="slot-bonus">+${bonus}% XP</span>
+                        <span class="slot-stack">x${slot.count}</span>
+                    `;
+                    box.onclick = () => returnFromSlot(index);
+                } else {
+                    box.innerHTML = '<span style="font-size:1.5rem; color:#444;">+</span>';
+                    box.onclick = () => alert("Tap a card below to move one copy here!");
+                }
+                slotsDiv.appendChild(box);
+            });
+            
+            const nnBoost = getMultiplierForCategory('nonut');
+            const slBoost = getMultiplierForCategory('sleep');
+            
+            let boostText = "Total: ";
+            let parts = [];
+            if (config.modules.nonut) { parts.push(`🚫 +${nnBoost}% XP`); }
+            if (config.modules.sleep) { parts.push(`💤 +${slBoost}% XP`); }
+            
+            document.getElementById('xp-boost-display').innerText = parts.length > 0 ? "Total: " + parts.join(" | ") : "";
+
+            renderModule('nonut', 'nn');
+            renderModule('sleep', 'sl');
             updateThemeUI();
+        }
+
+        function renderModule(cat, prefix) {
+            const div = document.getElementById(`module-${cat}`);
+            if (!config.modules[cat]) { div.style.display='none'; return; }
+            div.style.display='block';
+            
+            document.getElementById(`${prefix}-special-count`).innerText = rewards[cat].special;
+            document.getElementById(`${prefix}-shiny-count`).innerText = rewards[cat].shiny;
+            document.getElementById(`${prefix}-legendary-count`).innerText = rewards[cat].legendary;
+            document.getElementById(`${prefix}-streak`).innerText = rewards[cat].streak;
+            
+            updateBar(prefix, rewards[cat].streak);
+            let t=0; 
+            if(cat === 'nonut') archive.forEach(w=>{const r=w.data.filter(d=>!d.allowed); if(r.length>0 && r.every(d=>d.kept===true)) t++;}); 
+            else archive.forEach(w=>{const r=w.data.filter(d=>!d.exempt); if(r.length>0 && r.every(d=>d.sleep!==null && d.sleep<=config.targetWakeTime)) t++;}); 
+            document.getElementById(`${prefix}-total`).innerText = t;
         }
 
         function updateBar(prefix, streak) { let cyclePos = streak % 8; if (streak > 0 && cyclePos === 0) cyclePos = 8; document.getElementById(`${prefix}-bar`).style.width = (cyclePos / 8) * 100 + '%'; let msg = cyclePos < 4 ? `Next Shiny: ${4 - cyclePos}w` : (cyclePos < 8 ? `Next Legendary: ${8 - cyclePos}w` : "Level Up! New cycle next week."); document.getElementById(`${prefix}-next-text`).innerText = msg; }
@@ -943,10 +1159,10 @@
         }
 
         function resetData(){ if(confirm("WARNING: All data will be deleted.")) { localStorage.clear(); location.reload(); } }
-        function switchTab(id) { document.querySelectorAll('.content-section').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.classList.add('active'); if(id==='stats') renderStats(); if(id==='gallery') renderGallery(); updateFabState(); }
+        function switchTab(id) { document.querySelectorAll('.content-section').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.classList.add('active'); if(id==='stats') renderStats(); if(id==='gallery') renderGallery(); updateFabState(); if(id==='rewards') renderRewards(); }
         function openModal(src){ document.getElementById('modalImg').src=src; document.getElementById('imgModal').style.display='flex'; }
         function exportData() { const data = { config, rewards, rpg, currentWeek, archive, exportDate: new Date().toISOString() }; const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); const a = document.createElement('a'); a.href = dataStr; a.download = "waifu_tracker_backup.json"; a.click(); }
-        function importData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const json = JSON.parse(e.target.result); if(json.config) localStorage.setItem('wt_config', JSON.stringify(json.config)); if(json.rewards) localStorage.setItem('wt_rewards', JSON.stringify(json.rewards)); if(json.rpg) localStorage.setItem('wt_rpg', JSON.stringify(json.rpg)); if(json.currentWeek) localStorage.setItem('wt_week', JSON.stringify(json.currentWeek)); if(json.archive) localStorage.setItem('wt_archive', JSON.stringify(json.archive)); if(json.unlocks) localStorage.setItem('wt_unlocks', JSON.stringify(json.unlocks)); if(json.equipped) localStorage.setItem('wt_equipped', JSON.stringify(json.equipped)); alert("Data imported!"); location.reload(); } catch(err) { alert("Import error."); } }; reader.readAsText(file); }
+        function importData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const json = JSON.parse(e.target.result); if(json.config) localStorage.setItem('wt_config', JSON.stringify(json.config)); if(json.rewards) localStorage.setItem('wt_rewards', JSON.stringify(json.rewards)); if(json.rpg) localStorage.setItem('wt_rpg', JSON.stringify(json.rpg)); if(json.currentWeek) localStorage.setItem('wt_week', JSON.stringify(json.currentWeek)); if(json.archive) localStorage.setItem('wt_archive', JSON.stringify(json.archive)); if(json.unlocks) localStorage.setItem('wt_unlocks', JSON.stringify(json.unlocks)); if(json.equipped) localStorage.setItem('wt_equipped', JSON.stringify(json.equipped)); if(json.slots) localStorage.setItem('wt_slots', JSON.stringify(json.slots)); alert("Data imported!"); location.reload(); } catch(err) { alert("Import error."); } }; reader.readAsText(file); }
         function triggerFireworks(x, y) { const c=document.getElementById('fireworksCanvas'), cx=c.getContext('2d'); c.width=window.innerWidth; c.height=window.innerHeight; let startX=x||c.width/2; let startY=y||c.height/2; let p=[]; for(let i=0;i<60;i++) p.push({x:startX, y:startY, vx:(Math.random()-.5)*12, vy:(Math.random()-.5)*12, c:`hsl(${Math.random()*360},100%,50%)`, a:1}); function anim(){ cx.clearRect(0,0,c.width,c.height); p.forEach((k,i)=>{k.x+=k.vx;k.y+=k.vy;k.vy+=0.1;k.a-=0.02;cx.globalAlpha=k.a;cx.fillStyle=k.c;cx.fillRect(k.x,k.y,4,4);if(k.a<=0)p.splice(i,1)}); if(p.length)requestAnimationFrame(anim); } anim(); }
 
         init();
