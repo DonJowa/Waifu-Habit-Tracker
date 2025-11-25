@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Waifu Tracker: V65 Padding Fix</title>
+    <title>Waifu Tracker: V69 Gallery Fix</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -39,7 +39,6 @@
             color: var(--text-color);
             margin: 0;
             padding: 15px;
-            /* MODIFIED: Reduced from 300px to 50px to remove excessive bottom gap */
             padding-bottom: 50px; 
             display: flex;
             flex-direction: column;
@@ -75,8 +74,6 @@
 
         .content-section { 
             display: none; width: 100%; max-width: 600px; animation: fadeIn 0.3s ease; 
-            /* MODIFIED: Reduced from 400px to 220px. 
-               This is enough space for Chibi (120px) + Bubble (~80px) + Gap without leaving huge empty space */
             padding-bottom: 220px; 
         }
         .content-section.active { display: block; }
@@ -249,7 +246,8 @@
         .gallery-item.locked { opacity: 0.5; border-style: dashed; }
         .gallery-item.unlocked { cursor: pointer; border-color: var(--gold); }
         .gallery-item.unlocked:hover { transform: scale(1.05); }
-        .gallery-item img { width: 100%; height: 100%; object-fit: contain; background: #000; }
+        /* MODIFIED: Changed from contain to cover to fill the square */
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
         .lock-icon { font-size: 1.2rem; color: #555; }
 
         /* MODALS */
@@ -436,6 +434,10 @@
         // 15 REWARD IMAGES
         const rewardImages = [];
         for(let i=1; i<=15; i++) rewardImages.push(`reward${i}.png`);
+        
+        // NEW: 21 REWARD VOICES
+        const rewardVoiceFiles = [];
+        for(let i=1; i<=21; i++) rewardVoiceFiles.push(`reward_voice${i}.mp3`);
         
         const rewardLines = [
             "You did it like a final-boss speedrun! It's your reward day... Wanna take me like a princess?",
@@ -636,7 +638,6 @@
 
             if(config.modules.nonut && config.allowedDays.includes(appDay)) {
                 // REWARD DAY LOGIC
-                // If nothing special equipped (panic_button.png), show reward button
                 if(equipped.waifu === 'panic_button.png') img.src = 'reward_button.png'; 
                 else img.src = equipped.waifu; 
                 
@@ -644,7 +645,6 @@
                 startQuoteRotation(rewardLines);
             } else {
                 // NORMAL DAY LOGIC
-                // If nothing special equipped, show panic button (default is panic_button.png)
                 if(equipped.waifu === 'reward_button.png') img.src = 'panic_button.png';
                 else img.src = equipped.waifu; 
                 
@@ -673,7 +673,6 @@
 
         // --- TRIGGERS ---
         function triggerPanic() { 
-            // SMART AUDIO LOGIC
             let daysLeft = 0;
             const today = new Date().getDay();
             const appDay = today === 0 ? 6 : today - 1;
@@ -685,9 +684,10 @@
                 }
             }
             let fileToPlay = "";
-            if(daysLeft === 1) fileToPlay = `panic_1day_${Math.floor(Math.random() * 13) + 1}.mp3`;
-            else if (daysLeft === 2) fileToPlay = `panic_2days_${Math.floor(Math.random() * 8) + 1}.mp3`;
-            else if (daysLeft === 3) fileToPlay = `panic_3days_${Math.floor(Math.random() * 7) + 1}.mp3`;
+            // MODIFIED: Updated ranges to match new file counts
+            if(daysLeft === 1) fileToPlay = `panic_1day_${Math.floor(Math.random() * 20) + 1}.mp3`;
+            else if (daysLeft === 2) fileToPlay = `panic_2days_${Math.floor(Math.random() * 12) + 1}.mp3`;
+            else if (daysLeft === 3) fileToPlay = `panic_3days_${Math.floor(Math.random() * 9) + 1}.mp3`;
             else fileToPlay = `panic_long_${Math.floor(Math.random() * 4) + 1}.mp3`;
 
             document.getElementById('panicModal').style.display = 'flex'; 
@@ -705,7 +705,7 @@
         function triggerWeeklySuccess() { document.getElementById('weeklyModal').style.display = 'flex'; if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; } currentAudio = new Audio('weekly.mp3'); const p = currentAudio.play(); if(p!==undefined) p.catch(e=>{setTimeout(()=>{stopWeekly()},5000)}); let lc=0; const fl=setInterval(()=>{triggerFireworks(Math.random()*window.innerWidth, Math.random()*window.innerHeight*0.8);lc++;if(lc>15)clearInterval(fl)},300); }
         function stopWeekly() { document.getElementById('weeklyModal').style.display = 'none'; stopAudio(); archive.push({date:new Date(), data:[...currentWeek]}); initWeek(); renderLog(); renderRewards(); renderStats(); }
         
-        // --- RANDOM REWARD TRIGGER (WITH LEGENDARY CHECK) ---
+        // MODIFIED: New Reward Logic (Smart Gallery & Audio)
         function triggerReward() {
             document.getElementById('waifuBubble').style.display = 'none';
             const today = new Date().toLocaleDateString();
@@ -715,22 +715,19 @@
             if (saved.date === today && saved.img) {
                 selectedImg = saved.img;
             } else {
-                // Determine pool size
-                // 1-10 (Index 0-9) are Standard
-                // 11-15 (Index 10-14) are Elite (Requires 1 Legendary)
-                let pool = rewardImages.slice(0, 10);
+                // Get images NOT in gallery
+                let available = rewardImages.filter(img => !unlocks.gallery.includes(img));
                 
-                if (rewards.lifetime_legendaries >= 1) {
-                    pool = rewardImages; // All 15
+                // If all unlocked, use full pool
+                if (available.length === 0) {
+                    available = rewardImages;
                 }
 
-                let lastImg = saved.img;
-                if(pool.length > 1 && lastImg) { pool = pool.filter(img => img !== lastImg); }
-                selectedImg = pool[Math.floor(Math.random() * pool.length)];
+                // Random pick
+                selectedImg = available[Math.floor(Math.random() * available.length)];
                 
                 localStorage.setItem('wt_daily_reward', JSON.stringify({ date: today, img: selectedImg }));
                 
-                // UNLOCK LOGIC
                 if(!unlocks.gallery.includes(selectedImg)) {
                     unlocks.gallery.push(selectedImg);
                     save();
@@ -739,8 +736,9 @@
             }
             document.getElementById('rewardImg').src = selectedImg;
             document.getElementById('rewardModal').style.display = 'flex';
-            // Add audio to reward modal
-            playAudioWithFallback(successAudioFiles, 'rewardModal');
+            
+            // Play random reward voice (new array)
+            playAudioWithFallback(rewardVoiceFiles, 'rewardModal');
             triggerFireworks(window.innerWidth/2, window.innerHeight/2);
         }
         function stopReward() { document.getElementById('rewardModal').style.display = 'none'; document.getElementById('waifuBubble').style.display = 'block'; }
@@ -755,7 +753,32 @@
         // --- TRADING & RPG ---
         function trade(category, type, cost) { let b = rewards[category]; if (b[type] >= cost) { if(confirm(`Trade ${cost} ${type} for 1 Legendary?`)) { b[type] -= cost; b.legendary++; rewards.lifetime_legendaries++; save(); renderRewards(); updateThemeUI(); triggerFireworks(window.innerWidth/2, window.innerHeight/2); alert("Trade Successful!"); } } else { alert(`Not enough ${type}!`); } }
         function getLevelData(totalXP) { let l=1, c=300, r=totalXP; while(r>=c){r-=c; l++; c+=20;} return {level:l, currentXP:r, nextLevelCost:c}; }
-        function addXP(amount) { const oldD = getLevelData(rpg.xp); rpg.xp += amount; const newD = getLevelData(rpg.xp); if (newD.level > oldD.level) { if(config.modules.nonut) rewards.nonut.special++; if(config.modules.sleep) rewards.sleep.special++; save(); alert(`LEVEL UP! Level ${newD.level}!\nBonus: +1 Special(s)!`); triggerFireworks(window.innerWidth/2, window.innerHeight/2); } save(); renderRPG(); }
+        
+        function addXP(amount) { 
+            const oldD = getLevelData(rpg.xp); 
+            rpg.xp += amount; 
+            const newD = getLevelData(rpg.xp); 
+            
+            if (newD.level > oldD.level) { 
+                let itemsWon = [];
+                if(config.modules.nonut) {
+                    rewards.nonut.special++;
+                    itemsWon.push("💖 1x Special No Nut-chan");
+                }
+                if(config.modules.sleep) {
+                    rewards.sleep.special++;
+                    itemsWon.push("💤 1x Special Sleep-chan");
+                }
+                
+                save(); 
+                triggerFireworks(window.innerWidth/2, window.innerHeight/2); 
+                
+                alert(`LEVEL UP! You reached Level ${newD.level}!\n\nREWARDS:\n` + itemsWon.join("\n"));
+            } 
+            save(); 
+            renderRPG(); 
+        }
+        
         function renderRPG() { const d = getLevelData(rpg.xp); document.getElementById('rpg-level').innerText = d.level; document.getElementById('rpg-current-xp').innerText = d.currentXP; document.getElementById('rpg-next-xp').innerText = d.nextLevelCost; document.getElementById('xp-bar').style.width = Math.min((d.currentXP/d.nextLevelCost)*100,100)+'%'; let ti=Math.floor((d.level-1)/5); if(ti>=titles.length) ti=titles.length-1; document.getElementById('rpg-title').innerText = titles[ti]; }
 
         // --- RENDER LOGIC ---
@@ -798,10 +821,34 @@
         }
 
         function findLabel(val) { const t = config.wakeTimes.find(x => x.v === val); return t ? t.l : val; }
-        function setSleep(i, v) { if (currentWeek[i].sleep === null) { if (currentWeek[i].exempt || v <= config.targetWakeTime) addXP(5); } currentWeek[i].sleep = v; save(); renderLog(); checkDayCompletion(i); }
-        function setKept(i, v) { if(currentWeek[i].kept === null) { if(!currentWeek[i].allowed && v === true) addXP(10); else if(currentWeek[i].allowed) addXP(5); } currentWeek[i].kept = v; save(); renderLog(); checkDayCompletion(i); }
+        
+        function setSleep(i, v) { 
+            if (currentWeek[i].sleep === null) { 
+                if (currentWeek[i].exempt || v <= config.targetWakeTime) addXP(20); 
+            } 
+            currentWeek[i].sleep = v; 
+            save(); 
+            renderLog(); 
+            checkDayCompletion(i); 
+        }
+        
+        // MODIFIED: XP LOGIC BALANCING
+        function setKept(i, v) { 
+            if(currentWeek[i].kept === null) { 
+                // Not allowed & Success (Resistance) = 25 XP
+                if(!currentWeek[i].allowed && v === true) addXP(25); 
+                // Allowed (Indulge OR Skip) = 10 XP (Balancing)
+                else if(currentWeek[i].allowed) addXP(10); 
+            } 
+            currentWeek[i].kept = v; 
+            save(); 
+            renderLog(); 
+            checkDayCompletion(i); 
+        }
+        
         function resetDay(i, type) { if(type === 'sleep') currentWeek[i].sleep = null; if(type === 'kept') currentWeek[i].kept = null; save(); renderLog(); }
 
+        // MODIFIED: Alert Text Consistency
         function archiveWeek() {
             let incomplete = false;
             for(let d of currentWeek) { if(config.modules.sleep && d.sleep === null) incomplete = true; if(config.modules.nonut && d.kept === null) incomplete = true; }
@@ -815,8 +862,8 @@
                     rewards.nonut.streak++; rewards.nonut.special++; 
                     addXP(50); gainedXP += 50;
                     itemsWon.push("💖 1x Special No Nut-chan (+50 XP)");
-                    if(rewards.nonut.streak > 0 && rewards.nonut.streak % 4 === 0) { rewards.nonut.shiny++; addXP(100); gainedXP += 100; itemsWon.push("✨ 1x Shiny NN (+100 XP)"); }
-                    if(rewards.nonut.streak > 0 && rewards.nonut.streak % 8 === 0) { rewards.nonut.legendary++; rewards.lifetime_legendaries++; addXP(200); gainedXP += 200; itemsWon.push("👑 1x Legendary NN (+200 XP)"); }
+                    if(rewards.nonut.streak > 0 && rewards.nonut.streak % 4 === 0) { rewards.nonut.shiny++; addXP(100); gainedXP += 100; itemsWon.push("✨ 1x Shiny No Nut-chan (+100 XP)"); }
+                    if(rewards.nonut.streak > 0 && rewards.nonut.streak % 8 === 0) { rewards.nonut.legendary++; rewards.lifetime_legendaries++; addXP(200); gainedXP += 200; itemsWon.push("👑 1x Legendary No Nut-chan (+200 XP)"); }
                 } else { rewards.nonut.streak = 0; failReasons.push("No-Nut Failed"); }
             }
             if(config.modules.sleep) {
@@ -825,13 +872,13 @@
                     rewards.sleep.streak++; rewards.sleep.special++; 
                     addXP(50); gainedXP += 50;
                     itemsWon.push("💤 1x Special Sleep-chan (+50 XP)");
-                    if(rewards.sleep.streak > 0 && rewards.sleep.streak % 4 === 0) { rewards.sleep.shiny++; addXP(100); gainedXP += 100; itemsWon.push("✨ 1x Shiny Sleep (+100 XP)"); }
-                    if(rewards.sleep.streak > 0 && rewards.sleep.streak % 8 === 0) { rewards.sleep.legendary++; rewards.lifetime_legendaries++; addXP(200); gainedXP += 200; itemsWon.push("👑 1x Legendary Sleep (+200 XP)"); }
+                    if(rewards.sleep.streak > 0 && rewards.sleep.streak % 4 === 0) { rewards.sleep.shiny++; addXP(100); gainedXP += 100; itemsWon.push("✨ 1x Shiny Sleep-chan (+100 XP)"); }
+                    if(rewards.sleep.streak > 0 && rewards.sleep.streak % 8 === 0) { rewards.sleep.legendary++; rewards.lifetime_legendaries++; addXP(200); gainedXP += 200; itemsWon.push("👑 1x Legendary Sleep-chan (+200 XP)"); }
                 } else { rewards.sleep.streak = 0; failReasons.push("Sleep Failed"); }
             }
             save(); 
             if(itemsWon.length > 0) {
-                alert("CONGRATS! You earned:\n" + itemsWon.join("\n"));
+                alert("CONGRATS! WEEKLY STREAK REWARDS:\n\n" + itemsWon.join("\n"));
                 triggerWeeklySuccess();
             } else { 
                 alert("Better luck next week.\n" + failReasons.join("\n")); 
