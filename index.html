@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Waifu Tracker: V84 Negative Count Fix</title>
+    <title>Waifu Tracker: V89 Logic Fix</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
+            --bg-color: #050505; 
+            --card-bg: rgba(20, 20, 20, 0.85);
             --text-color: #e0e0e0;
             --accent-nn: #e91e63;
             --accent-sleep: #7c4dff;
@@ -22,10 +22,60 @@
             --silver: #e0e0e0;
             --xp-bar: #00e5ff;
             --panic: #ff1744;
-            --overlay-color: rgba(0, 0, 0, 0.7);
+            --overlay-color: rgba(0, 0, 0, 0.3);
         }
 
-        /* THEMES */
+        /* --- GLITTER ANIMATION KEYFRAMES --- */
+        /* Removed pulse animation, kept movement */
+        @keyframes glitter-move {
+            0% { background-position: 0 0, 25px 25px; }
+            100% { background-position: 100px 100px, 125px 125px; }
+        }
+
+        /* SPECIAL THEME: REWARD DAY (GOLD + GLITTER) */
+        body.theme-reward-day {
+            --accent-nn: #ff4081;
+            --accent-sleep: #ffd700;
+            --card-bg: rgba(40, 30, 0, 0.85);
+            --text-color: #fff8e1;
+            --btn-inactive: #4e342e;
+            --overlay-color: rgba(50, 40, 0, 0.5);
+            --xp-bar: #ffd700;
+        }
+
+        /* GLITTER PARTICLES */
+        body.theme-reward-day::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            background-image: 
+                radial-gradient(white 1px, transparent 2px),
+                radial-gradient(#ffd700 1px, transparent 2px);
+            background-size: 60px 60px, 40px 40px;
+            background-position: 0 0, 20px 20px;
+            opacity: 0.6;
+            animation: glitter-move 20s linear infinite;
+        }
+
+        body.theme-reward-day::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.8) 1.5px, transparent 2.5px),
+                radial-gradient(rgba(255, 215, 0, 0.6) 1px, transparent 2px);
+            background-size: 120px 120px, 90px 90px;
+            background-position: 60px 60px, 10px 10px;
+            opacity: 0.4;
+            /* MODIFIED: Removed glitter-sparkle */
+            animation: glitter-move 35s linear infinite reverse;
+        }
+        
+        /* EXISTING UNLOCKABLE THEMES */
         body.theme-red { --accent-nn: #ff5252; --accent-sleep: #ff1744; --xp-bar: #ff5252; --success: #d50000; --overlay-color: rgba(50, 0, 0, 0.8); }
         body.theme-blue { --accent-nn: #448aff; --accent-sleep: #2979ff; --xp-bar: #448aff; --success: #2962ff; --overlay-color: rgba(0, 0, 50, 0.8); }
         body.theme-green { --accent-nn: #69f0ae; --accent-sleep: #00e676; --xp-bar: #00c853; --success: #00e676; --overlay-color: rgba(0, 40, 0, 0.8); }
@@ -45,11 +95,11 @@
             align-items: center;
             min-height: 100vh;
             -webkit-tap-highlight-color: transparent;
-            transition: color 0.3s;
+            transition: color 0.5s ease, background-color 0.5s ease;
         }
 
         #bg-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background-color: var(--bg-color); 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-color: var(--bg-color); 
             background-image: linear-gradient(var(--overlay-color), var(--overlay-color)), url('bg.png');
             background-repeat: repeat; background-size: 400px;
             transition: background-image 0.5s ease;
@@ -128,7 +178,7 @@
             cursor: pointer; z-index: 900; transition: transform 0.2s;
             animation: float-chibi 3s ease-in-out infinite;
         }
-        #globalPanicBtn img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 15px rgba(233, 30, 99, 0.5)); }
+        #globalPanicBtn img { width: 100%; height: 100%; object-fit: contain; }
         #globalPanicBtn:active { transform: scale(0.9) rotate(-5deg); filter: brightness(0.8); }
         @keyframes float-chibi { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
 
@@ -305,10 +355,20 @@
         .tap-hint { font-size: 0.8rem; color: #aaa; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; animation: blink 2s infinite; }
         @keyframes blink { 0% { opacity:0.5; } 50% { opacity:1; } 100% { opacity:0.5; } }
 
+        /* MODAL STYLES FOR SUS/DISAPPOINTED */
+        #susModal, #disappointedModal { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column; }
+        #susImg, #disappointedImg { max-height: 60vh; max-width: 95vw; }
+        .sus-box { background: rgba(0,0,0,0.85); padding: 20px; border-radius: 12px; border: 2px solid var(--panic); margin-top: 20px; text-align: center; animation: slideUpFade 0.3s ease; }
+        .sus-text { color: #fff; font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; }
+        .sus-actions { display: flex; gap: 10px; justify-content: center; }
+        .sus-btn { padding: 10px 30px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+        .btn-yes { background: var(--success); color: black; }
+        .btn-no { background: var(--fail); color: white; }
+
         /* PANIC/SUCCESS MODALS - CLEANED UP */
         #panicModal, #successModal, #weeklyModal, #rewardModal { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); z-index: 9999; display: none; justify-content: center; align-items: center; }
         #panicImg, #successImg, #weeklyImg, #rewardImg { max-height: 85vh; max-width: 95vw; border: none; background: transparent; box-shadow: none; }
-        /* REMOVED FILTER: DROP-SHADOW */
+        
         #panicImg { animation: energetic-move 0.4s infinite alternate ease-in-out; }
         @keyframes energetic-move { 0% { transform: translateY(0) rotate(0deg) scale(1); } 25% { transform: translateY(-15px) rotate(-3deg) scale(1.02); } 50% { transform: translateY(0) rotate(3deg) scale(1.02); } 75% { transform: translateY(-7px) rotate(-1deg) scale(1.05); } 100% { transform: translateY(0) rotate(0deg) scale(1); } }
         #successImg { animation: joy-jump 0.6s infinite alternate ease-out; }
@@ -335,6 +395,7 @@
         .checkbox-group { margin-bottom: 20px; background: #222; padding: 10px; border-radius: 8px; border: 1px solid #444; }
         .checkbox-label { display: flex; align-items: center; gap: 10px; font-size: 1rem; color: #fff; margin: 5px 0; cursor: pointer; }
         .checkbox-label input { transform: scale(1.3); cursor: pointer; }
+        .setting-input { width: 100%; padding: 10px; background: #333; color: white; border: 1px solid #555; border-radius: 8px; margin-bottom: 15px; font-size: 1rem; box-sizing: border-box;}
     </style>
 </head>
 <body>
@@ -349,8 +410,32 @@
 
     <!-- MODALS -->
     <div id="imgModal" class="modal" onclick="this.style.display='none'"><img id="modalImg" src=""></div>
+    
+    <!-- PANIC MODAL -->
     <div id="panicModal" class="modal" onclick="stopPanic()"><img id="panicImg" src="panic.png" alt="Panic!"></div>
     
+    <!-- SUS MODAL -->
+    <div id="susModal" class="modal">
+        <img id="susImg" src="sus.png" alt="Suspicious">
+        <div class="sus-box">
+            <div class="sus-text" id="susQuestion">Did you really stick to the limit?</div>
+            <div class="sus-actions">
+                <button class="sus-btn btn-yes" onclick="confirmSuspicious(true)">YES</button>
+                <button class="sus-btn btn-no" onclick="confirmSuspicious(false)">NO</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- DISAPPOINTED MODAL -->
+    <div id="disappointedModal" class="modal" onclick="document.getElementById('disappointedModal').style.display='none'; stopAudio();">
+        <img id="disappointedImg" src="disappointed.png" alt="Disappointed">
+        <div class="reward-overlay">
+            <div class="reward-title" style="color:var(--fail)">FAILED</div>
+            <div class="reward-item">Better luck next time...</div>
+            <div class="tap-hint">(Tap to close)</div>
+        </div>
+    </div>
+
     <!-- SUCCESS MODAL WITH OVERLAY -->
     <div id="successModal" class="modal" onclick="stopSuccess()">
         <img id="successImg" src="success.png" alt="Success!">
@@ -476,6 +561,10 @@
             <label>Target Wake-up Time:</label>
             <select id="target-time-select" style="width:100%; padding:10px; margin-bottom:15px; background:#333; color:white; border:none;"></select>
             
+            <h4>Allowed Days Limit</h4>
+            <label>Max times allowed on Allowed Day:</label>
+            <input type="number" id="allowed-limit-input" class="setting-input" min="1" value="1">
+
             <h4>Data Management</h4>
             <button class="action-btn" style="background: #0277bd; color:white;" onclick="exportData()">💾 Export Progress</button>
             <button class="action-btn" style="background: #555; color:white;" onclick="document.getElementById('fileInput').click()">📂 Import Progress</button>
@@ -537,6 +626,7 @@
             allowedDays:[2,5], 
             sleepExemptDays:[5,6], 
             targetWakeTime:8, 
+            allowedLimit: 1, // Default limit
             wakeTimes:[{v:7,l:'07:00'},{v:8,l:'08:00'},{v:9,l:'09:00'},{v:10,l:'10:00'},{v:11,l:'11:00'},{v:12,l:'12:00+'}],
             modules: { nonut: true, sleep: true },
             activeTheme: '' 
@@ -544,24 +634,24 @@
         let rewards = { nonut:{special:0,shiny:0,legendary:0,streak:0}, sleep:{special:0,shiny:0,legendary:0,streak:0}, lifetime_legendaries: 0 };
         let rpg = { xp: 0 }; 
         let unlocks = { themes: [], gallery: [] }; 
-        // NEW SLOTS SYSTEM (Array of 3 items)
         let equippedSlots = [null, null, null];
         let equipped = { theme: '' };
         let currentWeek = [], archive = [];
         let currentAudio = null;
         let quoteInterval = null;
+        let pendingSusIndex = -1; // For holding state during modal
 
         function init() {
             if(localStorage.getItem('wt_config')) {
                 let tempConfig = JSON.parse(localStorage.getItem('wt_config'));
                 tempConfig.wakeTimes = config.wakeTimes;
                 if(!tempConfig.modules) tempConfig.modules = { nonut: true, sleep: true };
+                if(tempConfig.allowedLimit === undefined) tempConfig.allowedLimit = 1;
                 config = tempConfig;
             }
             if(localStorage.getItem('wt_rewards')) {
                 let r = JSON.parse(localStorage.getItem('wt_rewards'));
                 if(r.lifetime_legendaries === undefined) r.lifetime_legendaries = r.nonut.legendary + r.sleep.legendary;
-                // Ensure counters exist for new drop logic
                 if(r.nonut && r.nonut.totalDrops === undefined) { r.nonut.totalDrops = 0; r.nonut.dropCounter = 0; }
                 if(r.sleep && r.sleep.totalDrops === undefined) { r.sleep.totalDrops = 0; r.sleep.dropCounter = 0; }
                 rewards = r;
@@ -573,7 +663,6 @@
             }
             if(localStorage.getItem('wt_slots')) {
                 equippedSlots = JSON.parse(localStorage.getItem('wt_slots'));
-                // SAFETY: Ensure max 3 slots if old data exists
                 if(equippedSlots.length > 3) {
                     equippedSlots = equippedSlots.slice(0, 3);
                     save();
@@ -636,13 +725,12 @@
             setTimeout(() => {
                 img.remove();
                 if(callback) callback();
-            }, 500); // Match transition duration
+            }, 500); 
         }
 
-        // --- SLOTS LOGIC V84 (Immediate Update Fix) ---
+        // --- SLOTS LOGIC ---
         function moveToSlot(e, category, type, imgSrc, bgClass) {
             const count = rewards[category][type];
-            // 1. Immediate Check
             if(count <= 0) { alert("You don't have any of this card left in inventory!"); return; }
 
             const cardElement = e.currentTarget;
@@ -660,15 +748,11 @@
                 return;
             }
 
-            // 2. IMMEDIATE DEDUCTION & UPDATE
             rewards[category][type]--;
-            // Force update the specific counter immediately to prevent multi-click race condition
             const prefix = category === 'nonut' ? 'nn' : 'sl';
             document.getElementById(`${prefix}-${type}-count`).innerText = rewards[category][type];
-
             const targetSlotEl = document.getElementById('slot-' + targetSlotIndex);
 
-            // 3. Animation
             flyItem(cardElement, targetSlotEl, imgSrc, () => {
                 if (existingSlotIndex !== -1) {
                     equippedSlots[existingSlotIndex].count++;
@@ -677,7 +761,6 @@
                         category: category, type: type, img: imgSrc, bg: bgClass, count: 1 
                     };
                 }
-                // Save and full render after animation ends
                 save();
                 renderRewards();
             });
@@ -685,22 +768,18 @@
 
         function returnFromSlot(index) {
             const slot = equippedSlots[index];
-            if (!slot) return;
-            if (slot.count <= 0) return; // Safety
+            if (!slot || slot.count <= 0) return;
 
             const slotEl = document.getElementById('slot-' + index);
             const prefix = slot.category === 'nonut' ? 'nn' : 'sl';
             const targetCardId = `card-${prefix}-${slot.type}`;
             const targetCardEl = document.getElementById(targetCardId);
             
-            // IMMEDIATE LOGIC
             slot.count--; 
             rewards[slot.category][slot.type]++;
-            // Update card counter immediately
             const counterEl = document.getElementById(`${prefix}-${slot.type}-count`);
             if(counterEl) counterEl.innerText = rewards[slot.category][slot.type];
             
-            // Temporarily update slot stack visually if > 0
             if (slot.count > 0) {
                  slotEl.querySelector('.slot-stack').innerText = `x${slot.count}`;
             }
@@ -807,6 +886,10 @@
             const jsDay = new Date().getDay();
             const appDay = jsDay === 0 ? 6 : jsDay - 1;
             
+            // CHECK IF INDULGED OR SKIPPED TODAY (Any decision made)
+            const todayLog = currentWeek[appDay]; 
+            const hasLogged = todayLog && todayLog.kept !== null; 
+
             const btn = document.getElementById('globalPanicBtn');
             const img = document.getElementById('fabImg');
             const bubble = document.getElementById('waifuBubble');
@@ -815,15 +898,24 @@
             if(isSettings) { btn.style.display = 'none'; bubble.style.display = 'none'; if(quoteInterval) clearInterval(quoteInterval); return; }
             btn.style.display = 'flex';
             bubble.style.display = 'block';
+            
+            const isAllowedDay = config.modules.nonut && config.allowedDays.includes(appDay);
 
-            if(config.modules.nonut && config.allowedDays.includes(appDay)) {
+            // Only show Reward Mode if it's an allowed day AND no decision has been made yet
+            if(isAllowedDay && !hasLogged) {
+                // REWARD MODE
                 img.src = 'reward_button.png'; 
                 btn.onclick = triggerReward;
                 startQuoteRotation(rewardLines);
+                // SET GOLD THEME
+                document.body.classList.add('theme-reward-day');
             } else {
+                // NORMAL/PANIC MODE
                 img.src = 'panic_button.png';
                 btn.onclick = triggerPanic;
                 startQuoteRotation(panicLines);
+                // REVERT THEME
+                document.body.classList.remove('theme-reward-day');
             }
         }
 
@@ -894,7 +986,38 @@
         }
         function stopReward() { document.getElementById('rewardModal').style.display = 'none'; document.getElementById('waifuBubble').style.display = 'block'; }
 
-        // --- DROP LOGIC (MODIFIED: 5th drop = Shiny) ---
+        // --- SUSPICIOUS & DISAPPOINTED LOGIC ---
+        function triggerSuspicious(idx) {
+            pendingSusIndex = idx;
+            document.getElementById('susQuestion').innerText = `Did you stick to the limit of ${config.allowedLimit} times?`;
+            document.getElementById('susModal').style.display = 'flex';
+            if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+            currentAudio = new Audio('sus_voice.mp3');
+            currentAudio.play();
+        }
+        
+        function confirmSuspicious(confirmed) {
+            document.getElementById('susModal').style.display = 'none';
+            stopAudio();
+            if (confirmed) {
+                setKept(pendingSusIndex, true, true); 
+            } else {
+                triggerDisappointed();
+                currentWeek[pendingSusIndex].kept = false; 
+                save();
+                renderLog();
+                updateFabState(); // Revert theme immediately on No
+            }
+        }
+        
+        function triggerDisappointed() {
+            document.getElementById('disappointedModal').style.display = 'flex';
+            if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+            currentAudio = new Audio('disappointed_voice.mp3');
+            currentAudio.play();
+        }
+
+        // --- DROP LOGIC ---
         function checkDayDrop(category) {
             let r = rewards[category];
             if(r.totalDrops === undefined) { r.totalDrops = 0; r.dropCounter = 0; }
@@ -1032,6 +1155,7 @@
 
         function findLabel(val) { const t = config.wakeTimes.find(x => x.v === val); return t ? t.l : val; }
         
+        // Pass 'sleep' category
         function setSleep(i, v) { 
             if (currentWeek[i].sleep === null) { 
                 if (currentWeek[i].exempt || v <= config.targetWakeTime) addXP(20, 'sleep'); 
@@ -1041,17 +1165,40 @@
             renderLog(); 
         }
         
-        function setKept(i, v) { 
+        // Pass 'nonut' category
+        function setKept(i, v, force = false) { 
+            if (!force && currentWeek[i].kept === null) {
+                // Case 1: Normal Day FAIL -> Disappointed
+                if (!currentWeek[i].allowed && v === false) {
+                     triggerDisappointed();
+                     currentWeek[i].kept = v;
+                     save();
+                     renderLog();
+                     updateFabState();
+                     return;
+                }
+                
+                // Case 2: Allowed Day INDULGE -> Suspicious Check
+                if (currentWeek[i].allowed && v === true) {
+                    triggerSuspicious(i);
+                    return;
+                }
+            }
+
+            // Case 3: Normal Success / Confirmed Indulge / Skip
             if(currentWeek[i].kept === null) { 
                 if(!currentWeek[i].allowed && v === true) addXP(25, 'nonut'); 
-                else if(currentWeek[i].allowed) addXP(10, 'nonut'); 
+                else if(currentWeek[i].allowed) addXP(25, 'nonut'); // Changed from 10 to 25 per prompt
             } 
             currentWeek[i].kept = v; 
             save(); 
-            renderLog(); 
+            renderLog();
+            
+            // UPDATE FAB STATE IMMEDIATELY AFTER LOGGING
+            updateFabState();
         }
         
-        function resetDay(i, type) { if(type === 'sleep') currentWeek[i].sleep = null; if(type === 'kept') currentWeek[i].kept = null; save(); renderLog(); }
+        function resetDay(i, type) { if(type === 'sleep') currentWeek[i].sleep = null; if(type === 'kept') currentWeek[i].kept = null; save(); renderLog(); updateFabState(); }
 
         // MODIFIED: Replaced Alert with Integrated UI & Tap Hint
         function archiveWeek() {
@@ -1066,7 +1213,7 @@
                 const nnReq = currentWeek.filter(d => !d.allowed);
                 if(nnReq.length > 0 && nnReq.every(d => d.kept === true)) {
                     rewards.nonut.streak++; rewards.nonut.special++; hasRewards = true;
-                    addXP(50, null, true); // Silent mode
+                    addXP(50, null, true); // No boost on weekly rewards
                     msgHTML += `<div class="reward-item">💖 1x Special No Nut-chan (+50 XP)</div>`;
                     if(rewards.nonut.streak > 0 && rewards.nonut.streak % 4 === 0) { rewards.nonut.shiny++; addXP(100, null, true); msgHTML += `<div class="reward-item" style="color:var(--gold)">✨ 1x Shiny No Nut-chan (+100 XP)</div>`; }
                     if(rewards.nonut.streak > 0 && rewards.nonut.streak % 8 === 0) { rewards.nonut.legendary++; rewards.lifetime_legendaries++; addXP(200, null, true); msgHTML += `<div class="reward-item" style="color:var(--legendary)">👑 1x Legendary No Nut-chan (+200 XP)</div>`; }
@@ -1076,7 +1223,7 @@
                 const slReq = currentWeek.filter(d => !d.exempt);
                 if(slReq.length > 0 && slReq.every(d => d.sleep !== null && d.sleep <= config.targetWakeTime)) {
                     rewards.sleep.streak++; rewards.sleep.special++; hasRewards = true;
-                    addXP(50, null, true); // Silent mode
+                    addXP(50, null, true);
                     msgHTML += `<div class="reward-item">💤 1x Special Sleep-chan (+50 XP)</div>`;
                     if(rewards.sleep.streak > 0 && rewards.sleep.streak % 4 === 0) { rewards.sleep.shiny++; addXP(100, null, true); msgHTML += `<div class="reward-item" style="color:var(--gold)">✨ 1x Shiny Sleep-chan (+100 XP)</div>`; }
                     if(rewards.sleep.streak > 0 && rewards.sleep.streak % 8 === 0) { rewards.sleep.legendary++; rewards.lifetime_legendaries++; addXP(200, null, true); msgHTML += `<div class="reward-item" style="color:var(--legendary)">👑 1x Legendary Sleep-chan (+200 XP)</div>`; }
@@ -1153,22 +1300,10 @@
 
         function updateBar(prefix, streak) { let cyclePos = streak % 8; if (streak > 0 && cyclePos === 0) cyclePos = 8; document.getElementById(`${prefix}-bar`).style.width = (cyclePos / 8) * 100 + '%'; let msg = cyclePos < 4 ? `Next Shiny: ${4 - cyclePos}w` : (cyclePos < 8 ? `Next Legendary: ${8 - cyclePos}w` : "Level Up! New cycle next week."); document.getElementById(`${prefix}-next-text`).innerText = msg; }
         
-        function renderStats() { 
-            document.getElementById('stats-nonut').style.display = config.modules.nonut ? 'block' : 'none';
-            document.getElementById('stats-sleep').style.display = config.modules.sleep ? 'block' : 'none';
-            if(config.modules.sleep) {
-                const hm = document.getElementById('sleep-heatmap'); hm.innerHTML = ''; let all = []; archive.slice(-4).forEach(w => all.push(...w.data)); all.push(...currentWeek); all.slice(-28).forEach(d => { const el = document.createElement('div'); el.className = 'heatmap-day'; el.innerText = d.day.substring(0,1); if(d.sleep===null) el.style.background='#222'; else if(d.exempt) el.className+=' neutral'; else if(d.sleep<=config.targetWakeTime) el.className+=' success'; else el.className+=' fail'; hm.appendChild(el); }); 
-                const ctx = document.getElementById('sleepChart').getContext('2d'); const pts = all.filter(d=>d.sleep!==null).slice(-30); if(window.sleepChartInstance) window.sleepChartInstance.destroy(); window.sleepChartInstance = new Chart(ctx, { type:'line', data:{ labels:pts.map(d=>d.day.substring(0,3)), datasets:[{ label:'Time', data:pts.map(d=>d.sleep), borderColor:'#7c4dff', tension:0.3 }] }, options:{ scales:{y:{min:6,max:13}}, plugins:{legend:{display:false}} } }); 
-            }
-            if(config.modules.nonut) {
-                let nnWins = 0, nnLosses = 0; archive.forEach(w => { const req = w.data.filter(d => !d.allowed); if(req.length === 0) return; const isWin = req.every(d => d.kept === true); if(isWin) nnWins++; else nnLosses++; }); 
-                const ctxF = document.getElementById('fapChart').getContext('2d'); if(window.fapChartInstance) window.fapChartInstance.destroy(); window.fapChartInstance = new Chart(ctxF, { type: 'doughnut', data: { labels: ['Success', 'Fail'], datasets: [{ data: [nnWins, nnLosses], backgroundColor: ['#00c853', '#d50000'], borderWidth: 0 }] }, options: { plugins: { legend: { position: 'bottom', labels: { color: '#ccc' } } } } }); 
-            }
-        }
-
         function renderSettingsUI() {
             document.getElementById('toggle-nonut').checked = config.modules.nonut;
             document.getElementById('toggle-sleep').checked = config.modules.sleep;
+            document.getElementById('allowed-limit-input').value = config.allowedLimit || 1;
             const sel = document.getElementById('target-time-select'); sel.innerHTML = ''; config.wakeTimes.forEach(t => { sel.innerHTML += `<option value="${t.v}" ${config.targetWakeTime==t.v?'selected':''}>${t.l}</option>`; }); 
             const makeChecks = (id, src, all) => { const c = document.getElementById(id); c.innerHTML=''; all.forEach((d,i)=>{ c.innerHTML+=`<label><input type="checkbox" value="${i}" ${src.includes(i)?'checked':''}> ${d}</label>`; }); }; makeChecks('days-list', config.allowedDays, days); makeChecks('exempt-list', config.sleepExemptDays, days);
         }
@@ -1177,6 +1312,7 @@
             config.modules.nonut = document.getElementById('toggle-nonut').checked;
             config.modules.sleep = document.getElementById('toggle-sleep').checked;
             config.targetWakeTime = parseFloat(document.getElementById('target-time-select').value);
+            config.allowedLimit = parseInt(document.getElementById('allowed-limit-input').value) || 1;
             const getVals = (id) => Array.from(document.querySelectorAll(`#${id} input:checked`)).map(cb=>parseInt(cb.value));
             config.allowedDays = getVals('days-list'); config.sleepExemptDays = getVals('exempt-list');
             currentWeek.forEach((d, i) => { d.allowed = config.allowedDays.includes(i); d.exempt = config.sleepExemptDays.includes(i); });
