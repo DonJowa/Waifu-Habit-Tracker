@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Waifu Tracker: V89 Logic Fix</title>
+    <title>Waifu Tracker: V96 Uniform Buttons</title>
     <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg-color: #050505; 
@@ -25,14 +24,13 @@
             --overlay-color: rgba(0, 0, 0, 0.3);
         }
 
-        /* --- GLITTER ANIMATION KEYFRAMES --- */
-        /* Removed pulse animation, kept movement */
+        /* --- GLITTER ANIMATION --- */
         @keyframes glitter-move {
             0% { background-position: 0 0, 25px 25px; }
             100% { background-position: 100px 100px, 125px 125px; }
         }
 
-        /* SPECIAL THEME: REWARD DAY (GOLD + GLITTER) */
+        /* SPECIAL THEME: REWARD DAY */
         body.theme-reward-day {
             --accent-nn: #ff4081;
             --accent-sleep: #ffd700;
@@ -43,39 +41,18 @@
             --xp-bar: #ffd700;
         }
 
-        /* GLITTER PARTICLES */
         body.theme-reward-day::before {
-            content: "";
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: -1;
-            background-image: 
-                radial-gradient(white 1px, transparent 2px),
-                radial-gradient(#ffd700 1px, transparent 2px);
-            background-size: 60px 60px, 40px 40px;
-            background-position: 0 0, 20px 20px;
-            opacity: 0.6;
-            animation: glitter-move 20s linear infinite;
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; 
+            background-image: radial-gradient(white 1px, transparent 2px), radial-gradient(#ffd700 1px, transparent 2px);
+            background-size: 60px 60px, 40px 40px; background-position: 0 0, 20px 20px; opacity: 0.6; animation: glitter-move 20s linear infinite;
+        }
+        body.theme-reward-day::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.8) 1.5px, transparent 2.5px), radial-gradient(rgba(255, 215, 0, 0.6) 1px, transparent 2px);
+            background-size: 120px 120px, 90px 90px; background-position: 60px 60px, 10px 10px; opacity: 0.4; animation: glitter-move 35s linear infinite reverse;
         }
 
-        body.theme-reward-day::after {
-            content: "";
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: -1;
-            background-image: 
-                radial-gradient(rgba(255, 255, 255, 0.8) 1.5px, transparent 2.5px),
-                radial-gradient(rgba(255, 215, 0, 0.6) 1px, transparent 2px);
-            background-size: 120px 120px, 90px 90px;
-            background-position: 60px 60px, 10px 10px;
-            opacity: 0.4;
-            /* MODIFIED: Removed glitter-sparkle */
-            animation: glitter-move 35s linear infinite reverse;
-        }
-        
-        /* EXISTING UNLOCKABLE THEMES */
+        /* THEMES */
         body.theme-red { --accent-nn: #ff5252; --accent-sleep: #ff1744; --xp-bar: #ff5252; --success: #d50000; --overlay-color: rgba(50, 0, 0, 0.8); }
         body.theme-blue { --accent-nn: #448aff; --accent-sleep: #2979ff; --xp-bar: #448aff; --success: #2962ff; --overlay-color: rgba(0, 0, 50, 0.8); }
         body.theme-green { --accent-nn: #69f0ae; --accent-sleep: #00e676; --xp-bar: #00c853; --success: #00e676; --overlay-color: rgba(0, 40, 0, 0.8); }
@@ -160,14 +137,54 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.05);
             transition: background 0.3s;
         }
-        .day-card::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 8px; background: var(--btn-inactive); }
-        .day-card.allowed-day::after { background: var(--success); }
-        .day-card.exempt-day::after { background: var(--accent-sleep); }
-        .day-card.allowed-day.exempt-day::after { background: linear-gradient(to bottom, var(--success), var(--accent-sleep)); }
-        .day-card.is-today { border: 2px solid var(--accent-sleep); box-shadow: 0 0 20px rgba(124, 77, 255, 0.3); }
-        .day-card.completed { opacity: 0.9; }
+        /* New sub-card for split modules */
+        .module-subcard {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            padding-left: 40px; /* Space for vertical bar */
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        /* Vertical Colored Bar */
+        .module-subcard::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            width: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-weight: 900;
+            font-size: 0.7rem;
+            color: rgba(0,0,0,0.8);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
 
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .sub-sleep::before { content: "Sleep"; background: var(--accent-sleep); }
+        .sub-nonut::before { content: "No Nut"; background: var(--accent-nn); }
+
+        .day-card.is-today { border: 2px solid var(--accent-sleep); box-shadow: 0 0 20px rgba(124, 77, 255, 0.3); }
+
+        /* STAMPS (Centered in subcard) */
+        .stamp {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-40%, -50%) rotate(-5deg); 
+            width: 40%; height: auto; opacity: 0.9;
+            pointer-events: none; z-index: 5;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .day-title { font-size: 1.2rem; font-weight: bold; }
         .header-right { display: flex; align-items: center; gap: 8px; }
 
@@ -198,25 +215,42 @@
 
         .badges { display: flex; gap: 5px; }
         .badge { font-size: 0.65rem; padding: 3px 8px; border-radius: 6px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-        .badge-allowed { background: rgba(0, 200, 83, 0.2); color: #00e676; border: 1px solid #00e676; }
-        .badge-exempt { background: rgba(124, 77, 255, 0.2); color: #b388ff; border: 1px solid #b388ff; }
+        .badge-allowed { background: rgba(233, 30, 99, 0.2); color: var(--accent-nn); border: 1px solid var(--accent-nn); }
+        .badge-exempt { background: rgba(124, 77, 255, 0.2); color: var(--accent-sleep); border: 1px solid var(--accent-sleep); }
 
-        .btn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 8px; margin-bottom: 15px; }
+        /* MODIFIED: Buttons now 50/50 width always */
+        .btn-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; /* Always 2 equal columns */
+            gap: 8px; 
+        }
+        
+        /* Disabled state for completed days */
+        .btn-grid.disabled { opacity: 0.5; pointer-events: none; }
+
         button { padding: 12px 5px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; color: #ddd; background: var(--btn-inactive); transition: transform 0.1s; }
         button:active { transform: scale(0.96); }
+        
+        /* SLEEP BUTTONS */
         .sleep-btn.selected { background: var(--accent-sleep); color: white; }
-        .fap-btn.success-btn.selected { background: var(--success); color: black; }
-        .fap-btn.fail-btn.selected { background: var(--fail); color: white; }
-        .fap-btn.allowed-action.selected { background: #2e7d32; }
-        .fap-btn.allowed-skip.selected { background: var(--neutral); }
-        .summary-view { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 8px; }
-        .edit-btn { background: transparent; border: 1px solid #555; padding: 5px 10px; font-size: 0.8rem; }
+        
+        /* NO NUT BUTTONS (UNIFORM COLOR) */
+        .sub-nonut button.selected { background: var(--accent-nn) !important; color: white; }
+        
+        .summary-view { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; }
+        
+        /* NEW WRAPPER FOR COLLECTION TAB */
+        .collection-wrapper {
+            background: rgba(30, 30, 30, 0.9); backdrop-filter: blur(10px);
+            border-radius: 12px; padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
 
-        /* SLOTS SYSTEM (3 Slots) */
+        /* SLOTS SYSTEM */
         .slots-container {
             display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 8px; margin-bottom: 20px;
-            background: rgba(20,20,20,0.6); padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            gap: 8px; margin-bottom: 20px; padding: 0; 
         }
         .slot-box {
             aspect-ratio: 1; background: #222; border: 2px dashed #444; border-radius: 8px;
@@ -228,7 +262,6 @@
         .slot-box:active { transform: scale(0.95); }
         .slot-box.filled { border-style: solid; border-color: #fff; }
         
-        /* SLOT BACKGROUNDS */
         .slot-bg-common { background-image: url('card_common.jpg'); border-color: #888 !important; }
         .slot-bg-rare { background-image: url('card_rare.jpg'); border-color: var(--gold) !important; }
         .slot-bg-legendary { background-image: url('card_legendary.jpg'); border-color: var(--legendary) !important; box-shadow: 0 0 10px var(--legendary); }
@@ -240,15 +273,15 @@
         .xp-boost-total { text-align: center; font-size: 0.9rem; color: var(--success); margin-bottom: 10px; font-weight: bold; text-shadow: 0 0 10px rgba(0, 200, 83, 0.3); }
 
         /* WAIFU CARDS */
-        .waifu-grid { display: flex; gap: 20px; overflow-x: auto; padding: 25px 10px 40px 10px; scrollbar-width: none; }
+        .waifu-grid { display: flex; gap: 20px; overflow-x: auto; padding: 10px 0 25px 0; scrollbar-width: none; }
         .waifu-card { 
-            flex: 0 0 170px; height: 260px; padding: 0; border-radius: 14px; border: 1px solid #444;
+            flex: 0 0 140px; height: 220px; padding: 0; border-radius: 14px; border: 1px solid #444;
             text-align: center; position: relative; overflow: hidden; cursor: pointer;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: transform 0.1s ease, box-shadow 0.3s ease;
             background-size: cover; background-position: center; background-color: #222;
         }
-        .waifu-card:active { transform: scale(0.98) translateY(-10px); }
-        .waifu-card:hover { transform: translateY(-12px) scale(1.03); z-index: 10; box-shadow: 0 15px 30px rgba(0,0,0,0.7); border-color: #fff; }
+        .waifu-card:active { transform: scale(0.98) translateY(-5px); }
+        .waifu-card:hover { transform: translateY(-8px) scale(1.02); z-index: 10; box-shadow: 0 15px 30px rgba(0,0,0,0.7); border-color: #fff; }
         
         .bg-common { background-image: url('card_common.jpg'); border-color: #888; }
         .bg-rare { background-image: url('card_rare.jpg'); border-color: var(--gold); }
@@ -463,7 +496,7 @@
         <button class="tab-btn active" onclick="switchTab('log')">Log</button>
         <button class="tab-btn" onclick="switchTab('rewards')">Collection</button>
         <button class="tab-btn" onclick="switchTab('gallery')">Gallery</button>
-        <button class="tab-btn" onclick="switchTab('stats')">Stats</button>
+        <!-- Stats Tab Removed -->
         <button class="tab-btn" onclick="switchTab('settings')">⚙️</button>
     </div>
 
@@ -475,18 +508,23 @@
 
     <!-- REWARDS SECTION -->
     <div id="rewards" class="content-section">
-        <!-- NEW SLOTS SYSTEM -->
-        <div class="xp-boost-total" id="xp-boost-display">Total: 🚫 +0% XP | 💤 +0% XP</div>
-        <div class="slots-container" id="slots-grid">
-            <!-- Slots generated via JS -->
+        <!-- NEW SLOTS SYSTEM WITH WRAPPER -->
+        <div class="collection-wrapper">
+            <div class="xp-boost-total" id="xp-boost-display">Total: 🚫 +0% XP | 💤 +0% XP</div>
+            <div class="slots-container" id="slots-grid">
+                <!-- Slots generated via JS -->
+            </div>
         </div>
 
         <div id="module-nonut">
-            <h3 style="color:var(--accent-nn); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">No Nut-chan</h3>
-            <div class="waifu-grid">
-                <div class="waifu-card bg-common" id="card-nn-special" onclick="moveToSlot(event, 'nonut', 'special', 'special.png', 'slot-bg-common')"><span id="nn-special-count" class="waifu-count count-special">0</span><img src="special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
-                <div class="waifu-card bg-rare" id="card-nn-shiny" onclick="moveToSlot(event, 'nonut', 'shiny', 'shiny.png', 'slot-bg-rare')"><span id="nn-shiny-count" class="waifu-count count-shiny">0</span><img src="shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
-                <div class="waifu-card bg-legendary" id="card-nn-legendary" onclick="moveToSlot(event, 'nonut', 'legendary', 'legendary.png', 'slot-bg-legendary')"><span id="nn-legendary-count" class="waifu-count count-legendary">0</span><img src="legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
+            <!-- WRAPPER AROUND INVENTORY -->
+            <div class="collection-wrapper">
+                <h3 style="color:var(--accent-nn); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">No Nut-chan</h3>
+                <div class="waifu-grid">
+                    <div class="waifu-card bg-common" id="card-nn-special" onclick="moveToSlot(event, 'nonut', 'special', 'special.png', 'slot-bg-common')"><span id="nn-special-count" class="waifu-count count-special">0</span><img src="special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
+                    <div class="waifu-card bg-rare" id="card-nn-shiny" onclick="moveToSlot(event, 'nonut', 'shiny', 'shiny.png', 'slot-bg-rare')"><span id="nn-shiny-count" class="waifu-count count-shiny">0</span><img src="shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
+                    <div class="waifu-card bg-legendary" id="card-nn-legendary" onclick="moveToSlot(event, 'nonut', 'legendary', 'legendary.png', 'slot-bg-legendary')"><span id="nn-legendary-count" class="waifu-count count-legendary">0</span><img src="legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
+                </div>
             </div>
             <div class="trade-box">
                 <div class="trade-header">Card Exchange</div>
@@ -502,11 +540,14 @@
         </div>
 
         <div id="module-sleep" style="margin-top:40px;">
-            <h3 style="color:var(--accent-sleep); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Sleep-chan</h3>
-            <div class="waifu-grid">
-                <div class="waifu-card bg-common" id="card-sl-special" onclick="moveToSlot(event, 'sleep', 'special', 'sleep_special.png', 'slot-bg-common')"><span id="sl-special-count" class="waifu-count count-special">0</span><img src="sleep_special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
-                <div class="waifu-card bg-rare" id="card-sl-shiny" onclick="moveToSlot(event, 'sleep', 'shiny', 'sleep_shiny.png', 'slot-bg-rare')"><span id="sl-shiny-count" class="waifu-count count-shiny">0</span><img src="sleep_shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
-                <div class="waifu-card bg-legendary" id="card-sl-legendary" onclick="moveToSlot(event, 'sleep', 'legendary', 'sleep_legendary.png', 'slot-bg-legendary')"><span id="sl-legendary-count" class="waifu-count count-legendary">0</span><img src="sleep_legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
+            <!-- WRAPPER AROUND INVENTORY -->
+            <div class="collection-wrapper">
+                <h3 style="color:var(--accent-sleep); margin-left: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Sleep-chan</h3>
+                <div class="waifu-grid">
+                    <div class="waifu-card bg-common" id="card-sl-special" onclick="moveToSlot(event, 'sleep', 'special', 'sleep_special.png', 'slot-bg-common')"><span id="sl-special-count" class="waifu-count count-special">0</span><img src="sleep_special.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Special</div></div></div>
+                    <div class="waifu-card bg-rare" id="card-sl-shiny" onclick="moveToSlot(event, 'sleep', 'shiny', 'sleep_shiny.png', 'slot-bg-rare')"><span id="sl-shiny-count" class="waifu-count count-shiny">0</span><img src="sleep_shiny.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Shiny</div></div></div>
+                    <div class="waifu-card bg-legendary" id="card-sl-legendary" onclick="moveToSlot(event, 'sleep', 'legendary', 'sleep_legendary.png', 'slot-bg-legendary')"><span id="sl-legendary-count" class="waifu-count count-legendary">0</span><img src="sleep_legendary.png" class="waifu-img"><div class="waifu-info"><div class="waifu-label">Legendary</div></div></div>
+                </div>
             </div>
             <div class="trade-box">
                 <div class="trade-header">Card Exchange</div>
@@ -533,51 +574,49 @@
         </div>
     </div>
 
-    <!-- STATS SECTION -->
-    <div id="stats" class="content-section">
-        <div id="stats-nonut" class="stat-box"><div style="max-width: 300px; margin: 0 auto;"><canvas id="fapChart"></canvas></div></div>
-        <div id="stats-sleep"><div class="stat-box"><h3>Monthly Calendar (Sleep)</h3><div id="sleep-heatmap" class="heatmap-grid"></div></div><div class="stat-box"><h3>Sleep Graph (30 days)</h3><canvas id="sleepChart"></canvas></div></div>
-    </div>
-
     <!-- SETTINGS SECTION -->
     <div id="settings" class="content-section">
-        <div class="stat-box">
-            <h3>Theme Selector</h3>
-            <div class="theme-selector">
-                <div class="theme-btn t-red unlocked" onclick="setTheme('')"></div>
-                <div class="theme-btn t-blue" id="btn-theme-blue" onclick="setTheme('theme-blue')"></div>
-                <div class="theme-btn t-green" id="btn-theme-green" onclick="setTheme('theme-green')"></div>
-                <div class="theme-btn t-gold" id="theme-btn-gold" onclick="setTheme('theme-gold')"></div>
-                <div class="theme-btn t-rainbow" id="theme-btn-rainbow" onclick="setTheme('theme-rainbow')"></div>
+        <!-- WRAPPER FOR SETTINGS -->
+        <div class="collection-wrapper">
+            <div class="stat-box" style="background:transparent; box-shadow:none; padding:0; border:none;">
+                <h3>Theme Selector</h3>
+                <div class="theme-selector">
+                    <div class="theme-btn t-red unlocked" onclick="setTheme('')"></div>
+                    <div class="theme-btn t-blue" id="btn-theme-blue" onclick="setTheme('theme-blue')"></div>
+                    <div class="theme-btn t-green" id="btn-theme-green" onclick="setTheme('theme-green')"></div>
+                    <div class="theme-btn t-gold" id="theme-btn-gold" onclick="setTheme('theme-gold')"></div>
+                    <div class="theme-btn t-rainbow" id="theme-btn-rainbow" onclick="setTheme('theme-rainbow')"></div>
+                </div>
+
+                <h3>Active Trackers</h3>
+                <div class="checkbox-group">
+                    <label class="checkbox-label"><input type="checkbox" id="toggle-nonut"> No Nut-chan Mode</label>
+                    <label class="checkbox-label"><input type="checkbox" id="toggle-sleep"> Sleep-chan Mode</label>
+                </div>
+
+                <h3>Settings</h3>
+                <label>Target Wake-up Time:</label>
+                <!-- MODIFIED: Pure Time Input, no select -->
+                <input type="time" id="target-time-input" class="setting-input">
+                
+                <!-- REMOVED HEADER -->
+                <label>Nut limit on allowed days:</label>
+                <input type="number" id="allowed-limit-input" class="setting-input" min="1" value="1">
+
+                <h4>Data Management</h4>
+                <button class="action-btn" style="background: #0277bd; color:white;" onclick="exportData()">💾 Export Progress</button>
+                <button class="action-btn" style="background: #555; color:white;" onclick="document.getElementById('fileInput').click()">📂 Import Progress</button>
+                <input type="file" id="fileInput" accept=".json" onchange="importData(this)" style="display:none;">
+                
+                <h4>Allowed Days (No-Nut)</h4>
+                <div id="days-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;"></div>
+                
+                <h4>Sleep Exempt</h4>
+                <div id="exempt-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;"></div>
+                
+                <button onclick="saveSettings()" class="action-btn">Save Settings</button>
+                <button onclick="resetData()" class="action-btn" style="background:var(--fail); color:white;">Reset All Data</button>
             </div>
-
-            <h3>Active Trackers</h3>
-            <div class="checkbox-group">
-                <label class="checkbox-label"><input type="checkbox" id="toggle-nonut"> No Nut-chan Mode</label>
-                <label class="checkbox-label"><input type="checkbox" id="toggle-sleep"> Sleep-chan Mode</label>
-            </div>
-
-            <h3>Settings</h3>
-            <label>Target Wake-up Time:</label>
-            <select id="target-time-select" style="width:100%; padding:10px; margin-bottom:15px; background:#333; color:white; border:none;"></select>
-            
-            <h4>Allowed Days Limit</h4>
-            <label>Max times allowed on Allowed Day:</label>
-            <input type="number" id="allowed-limit-input" class="setting-input" min="1" value="1">
-
-            <h4>Data Management</h4>
-            <button class="action-btn" style="background: #0277bd; color:white;" onclick="exportData()">💾 Export Progress</button>
-            <button class="action-btn" style="background: #555; color:white;" onclick="document.getElementById('fileInput').click()">📂 Import Progress</button>
-            <input type="file" id="fileInput" accept=".json" onchange="importData(this)" style="display:none;">
-            
-            <h4>Allowed Days (No-Nut)</h4>
-            <div id="days-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;"></div>
-            
-            <h4>Sleep Exempt</h4>
-            <div id="exempt-list" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;"></div>
-            
-            <button onclick="saveSettings()" class="action-btn">Save Settings</button>
-            <button onclick="resetData()" class="action-btn" style="background:var(--fail); color:white;">Reset All Data</button>
         </div>
     </div>
 
@@ -625,9 +664,9 @@
         let config = { 
             allowedDays:[2,5], 
             sleepExemptDays:[5,6], 
-            targetWakeTime:8, 
-            allowedLimit: 1, // Default limit
-            wakeTimes:[{v:7,l:'07:00'},{v:8,l:'08:00'},{v:9,l:'09:00'},{v:10,l:'10:00'},{v:11,l:'11:00'},{v:12,l:'12:00+'}],
+            targetWakeTime:"08:00", 
+            allowedLimit: 1, 
+            wakeTimes:[], 
             modules: { nonut: true, sleep: true },
             activeTheme: '' 
         };
@@ -639,12 +678,12 @@
         let currentWeek = [], archive = [];
         let currentAudio = null;
         let quoteInterval = null;
-        let pendingSusIndex = -1; // For holding state during modal
+        let pendingSusIndex = -1; 
 
         function init() {
             if(localStorage.getItem('wt_config')) {
                 let tempConfig = JSON.parse(localStorage.getItem('wt_config'));
-                tempConfig.wakeTimes = config.wakeTimes;
+                if(!tempConfig.targetWakeTime) tempConfig.targetWakeTime = "08:00"; 
                 if(!tempConfig.modules) tempConfig.modules = { nonut: true, sleep: true };
                 if(tempConfig.allowedLimit === undefined) tempConfig.allowedLimit = 1;
                 config = tempConfig;
@@ -678,7 +717,7 @@
             if(config.activeTheme) document.body.className = config.activeTheme;
             
             updateFabState();
-            renderLog(); renderRewards(); renderSettingsUI(); renderRPG(); renderStats(); updateThemeUI(); renderGallery();
+            renderLog(); renderRewards(); renderSettingsUI(); renderRPG(); updateThemeUI(); renderGallery();
         }
 
         function initWeek() {
@@ -886,9 +925,9 @@
             const jsDay = new Date().getDay();
             const appDay = jsDay === 0 ? 6 : jsDay - 1;
             
-            // CHECK IF INDULGED OR SKIPPED TODAY (Any decision made)
-            const todayLog = currentWeek[appDay]; 
-            const hasLogged = todayLog && todayLog.kept !== null; 
+            // CHECK IF INDULGED TODAY OR A DECISION WAS MADE
+            const todayLog = currentWeek[appDay];
+            const isDecided = todayLog && todayLog.kept !== null; 
 
             const btn = document.getElementById('globalPanicBtn');
             const img = document.getElementById('fabImg');
@@ -901,20 +940,15 @@
             
             const isAllowedDay = config.modules.nonut && config.allowedDays.includes(appDay);
 
-            // Only show Reward Mode if it's an allowed day AND no decision has been made yet
-            if(isAllowedDay && !hasLogged) {
-                // REWARD MODE
+            if(isAllowedDay && !isDecided) {
                 img.src = 'reward_button.png'; 
                 btn.onclick = triggerReward;
                 startQuoteRotation(rewardLines);
-                // SET GOLD THEME
                 document.body.classList.add('theme-reward-day');
             } else {
-                // NORMAL/PANIC MODE
                 img.src = 'panic_button.png';
                 btn.onclick = triggerPanic;
                 startQuoteRotation(panicLines);
-                // REVERT THEME
                 document.body.classList.remove('theme-reward-day');
             }
         }
@@ -950,7 +984,6 @@
             document.getElementById('panicModal').style.display = 'flex'; 
             if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
             currentAudio = new Audio(fileToPlay);
-            // RESTORED AUTO-CLOSE FOR PANIC ONLY
             currentAudio.onended = function() { stopPanic(); };
             currentAudio.play();
         }
@@ -958,7 +991,7 @@
         function triggerSuccess() { document.getElementById('successText').style.display = 'block'; document.getElementById('successModal').style.display = 'flex'; triggerFireworks(window.innerWidth/2, window.innerHeight/2); playAudioWithFallback(successAudioFiles, 'successModal'); }
         function stopSuccess() { document.getElementById('successModal').style.display = 'none'; stopAudio(); }
         function triggerWeeklySuccess() { document.getElementById('weeklyText').style.display = 'block'; document.getElementById('weeklyModal').style.display = 'flex'; if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; } currentAudio = new Audio('weekly.mp3'); currentAudio.play(); let lc=0; const fl=setInterval(()=>{triggerFireworks(Math.random()*window.innerWidth, Math.random()*window.innerHeight*0.8);lc++;if(lc>15)clearInterval(fl)},300); }
-        function stopWeekly() { document.getElementById('weeklyModal').style.display = 'none'; stopAudio(); archive.push({date:new Date(), data:[...currentWeek]}); initWeek(); renderLog(); renderRewards(); renderStats(); }
+        function stopWeekly() { document.getElementById('weeklyModal').style.display = 'none'; stopAudio(); archive.push({date:new Date(), data:[...currentWeek]}); initWeek(); renderLog(); renderRewards(); }
         
         function triggerReward() {
             document.getElementById('waifuBubble').style.display = 'none';
@@ -1006,7 +1039,7 @@
                 currentWeek[pendingSusIndex].kept = false; 
                 save();
                 renderLog();
-                updateFabState(); // Revert theme immediately on No
+                updateFabState();
             }
         }
         
@@ -1122,53 +1155,76 @@
             currentWeek.forEach((d, i) => {
                 const card = document.createElement('div');
                 let classes = 'day-card';
-                if(config.modules.nonut && d.allowed) classes += ' allowed-day'; 
-                if(config.modules.sleep && d.exempt) classes += ' exempt-day'; 
-                if(i === todayIdx) classes += ' is-today';
-                if((!config.modules.sleep || d.sleep !== null) && (!config.modules.nonut || d.kept !== null)) classes += ' completed';
+                if (i === todayIdx) classes += ' is-today';
                 card.className = classes;
+                
+                // Header
                 let badges = '';
-                if(config.modules.nonut && d.allowed) badges += '<span class="badge badge-allowed">Allowed</span>';
-                if(config.modules.sleep && d.exempt) badges += '<span class="badge badge-exempt">Sleep In</span>';
+                if(config.modules.nonut && d.allowed) badges += '<span class="badge badge-allowed">NUT ALLOWED</span>';
+                if(config.modules.sleep && d.exempt) badges += '<span class="badge badge-exempt">SLEEP-IN ALLOWED</span>';
                 let content = `<div class="card-header"><span class="day-title">${d.day}</span><div class="header-right"><div class="badges">${badges}</div></div></div>`;
+                
+                // SLEEP MODULE BOX (MODIFIED)
                 if(config.modules.sleep) {
+                    content += `<div class="module-subcard sub-sleep">`;
                     if (d.sleep !== null) {
-                        const sleepText = d.sleep <= config.targetWakeTime || d.exempt ? '✅ On Time' : '❌ Overslept';
-                        content += `<div class="summary-view"><div class="summary-text"><b>💤 Sleep:</b> ${findLabel(d.sleep)} (${sleepText})</div><button class="edit-btn" onclick="resetDay(${i}, 'sleep')">Edit</button></div>`;
+                         // Either true (success) or false (fail)
+                         let stamp = (d.sleep === true) ? 'success_stamp.png' : 'fail_stamp.png';
+                         content += `<img src="${stamp}" class="stamp">`;
+                         
+                         // Disabled buttons look
+                         let sleepBtns = `<button class="sleep-btn success ${d.sleep === true ? 'selected' : ''}">Woke up at ${config.targetWakeTime}</button>
+                                          <button class="sleep-btn fail ${d.sleep === false ? 'selected' : ''}">Fail</button>`;
+                         content += `<div class="btn-grid disabled">${sleepBtns}</div>`;
                     } else {
-                        let sleepBtns = ''; config.wakeTimes.forEach(t => { sleepBtns += `<button class="sleep-btn ${d.sleep===t.v?'selected':''}" onclick="setSleep(${i},${t.v})">${t.l}</button>`; });
-                        content += `<div style="margin-bottom:5px;font-size:0.9rem;">💤 Woke up:</div><div class="btn-grid">${sleepBtns}</div>`;
+                         // Active buttons
+                         content += `<div class="btn-grid">
+                            <button class="sleep-btn success" onclick="setSleep(${i}, true)">Woke up at ${config.targetWakeTime}</button>
+                            <button class="sleep-btn fail" onclick="setSleep(${i}, false)">Fail</button>
+                         </div>`;
                     }
+                    content += `</div>`;
                 }
+
+                // NO NUT MODULE BOX
                 if(config.modules.nonut) {
+                    content += `<div class="module-subcard sub-nonut">`;
                     if (d.kept !== null) {
-                        let nutText = d.allowed ? (d.kept ? '✅ Indulged' : '⏸️ Skipped') : (d.kept ? '✅ Success' : '❌ Failed');
-                        content += `<div class="summary-view"><div class="summary-text"><b>🚫 Status:</b> ${nutText}</div><button class="edit-btn" onclick="resetDay(${i}, 'kept')">Edit</button></div>`;
+                         let stamp = (!d.allowed && d.kept === false) ? 'fail_stamp.png' : 'success_stamp.png';
+                         content += `<img src="${stamp}" class="stamp">`;
+                         
+                         let nutBtns = d.allowed ? 
+                            `<button class="fap-btn allowed-action ${d.kept === true ? 'selected' : ''}">Indulge</button><button class="fap-btn allowed-skip ${d.kept === false ? 'selected' : ''}">Skip</button>` : 
+                            `<button class="fap-btn success-btn ${d.kept === true ? 'selected' : ''}">Success</button><button class="fap-btn fail-btn ${d.kept === false ? 'selected' : ''}">Fail</button>`;
+                         
+                         content += `<div class="btn-grid disabled">${nutBtns}</div>`;
                     } else {
                         let nutBtns = d.allowed ? `<button class="fap-btn allowed-action" onclick="setKept(${i},true)">Indulge</button><button class="fap-btn allowed-skip" onclick="setKept(${i},false)">Skip</button>` : `<button class="fap-btn success-btn" onclick="setKept(${i},true)">Success</button><button class="fap-btn fail-btn" onclick="setKept(${i},false)">Fail</button>`;
-                        content += `<div style="margin-bottom:5px;font-size:0.9rem;">🚫 Status:</div><div class="btn-grid" style="grid-template-columns:1fr 1fr;">${nutBtns}</div>`;
+                        content += `<div class="btn-grid">${nutBtns}</div>`;
                     }
+                    content += `</div>`;
                 }
-                card.innerHTML = content; container.appendChild(card);
+
+                card.innerHTML = content;
+                container.appendChild(card);
             });
         }
-
-        function findLabel(val) { const t = config.wakeTimes.find(x => x.v === val); return t ? t.l : val; }
         
-        // Pass 'sleep' category
+        // MODIFIED: Simplified Sleep Logic
         function setSleep(i, v) { 
             if (currentWeek[i].sleep === null) { 
-                if (currentWeek[i].exempt || v <= config.targetWakeTime) addXP(20, 'sleep'); 
+                // v is boolean now (true = woke on time/success, false = fail)
+                if (v === true) {
+                    addXP(20, 'sleep'); 
+                }
             } 
             currentWeek[i].sleep = v; 
             save(); 
             renderLog(); 
         }
         
-        // Pass 'nonut' category
         function setKept(i, v, force = false) { 
             if (!force && currentWeek[i].kept === null) {
-                // Case 1: Normal Day FAIL -> Disappointed
                 if (!currentWeek[i].allowed && v === false) {
                      triggerDisappointed();
                      currentWeek[i].kept = v;
@@ -1178,29 +1234,25 @@
                      return;
                 }
                 
-                // Case 2: Allowed Day INDULGE -> Suspicious Check
                 if (currentWeek[i].allowed && v === true) {
                     triggerSuspicious(i);
                     return;
                 }
             }
 
-            // Case 3: Normal Success / Confirmed Indulge / Skip
             if(currentWeek[i].kept === null) { 
                 if(!currentWeek[i].allowed && v === true) addXP(25, 'nonut'); 
-                else if(currentWeek[i].allowed) addXP(25, 'nonut'); // Changed from 10 to 25 per prompt
+                else if(currentWeek[i].allowed) addXP(25, 'nonut'); 
+                else if(v === true) addXP(25, 'nonut');
             } 
             currentWeek[i].kept = v; 
             save(); 
             renderLog();
-            
-            // UPDATE FAB STATE IMMEDIATELY AFTER LOGGING
             updateFabState();
         }
         
-        function resetDay(i, type) { if(type === 'sleep') currentWeek[i].sleep = null; if(type === 'kept') currentWeek[i].kept = null; save(); renderLog(); updateFabState(); }
+        function resetDay(i, type) { /* Removed, logs are permanent now */ }
 
-        // MODIFIED: Replaced Alert with Integrated UI & Tap Hint
         function archiveWeek() {
             let incomplete = false;
             for(let d of currentWeek) { if(config.modules.sleep && d.sleep === null) incomplete = true; if(config.modules.nonut && d.kept === null) incomplete = true; }
@@ -1213,7 +1265,7 @@
                 const nnReq = currentWeek.filter(d => !d.allowed);
                 if(nnReq.length > 0 && nnReq.every(d => d.kept === true)) {
                     rewards.nonut.streak++; rewards.nonut.special++; hasRewards = true;
-                    addXP(50, null, true); // No boost on weekly rewards
+                    addXP(50, null, true); 
                     msgHTML += `<div class="reward-item">💖 1x Special No Nut-chan (+50 XP)</div>`;
                     if(rewards.nonut.streak > 0 && rewards.nonut.streak % 4 === 0) { rewards.nonut.shiny++; addXP(100, null, true); msgHTML += `<div class="reward-item" style="color:var(--gold)">✨ 1x Shiny No Nut-chan (+100 XP)</div>`; }
                     if(rewards.nonut.streak > 0 && rewards.nonut.streak % 8 === 0) { rewards.nonut.legendary++; rewards.lifetime_legendaries++; addXP(200, null, true); msgHTML += `<div class="reward-item" style="color:var(--legendary)">👑 1x Legendary No Nut-chan (+200 XP)</div>`; }
@@ -1221,7 +1273,8 @@
             }
             if(config.modules.sleep) {
                 const slReq = currentWeek.filter(d => !d.exempt);
-                if(slReq.length > 0 && slReq.every(d => d.sleep !== null && d.sleep <= config.targetWakeTime)) {
+                // Check logic changed to boolean
+                if(slReq.length > 0 && slReq.every(d => d.sleep === true)) {
                     rewards.sleep.streak++; rewards.sleep.special++; hasRewards = true;
                     addXP(50, null, true);
                     msgHTML += `<div class="reward-item">💤 1x Special Sleep-chan (+50 XP)</div>`;
@@ -1237,7 +1290,7 @@
                 triggerWeeklySuccess();
             } else { 
                 alert("Streak lost. Better luck next week."); 
-                archive.push({date:new Date(), data:[...currentWeek]}); initWeek(); renderLog(); renderRewards(); renderStats(); 
+                archive.push({date:new Date(), data:[...currentWeek]}); initWeek(); renderLog(); renderRewards(); 
             }
         }
 
@@ -1269,7 +1322,6 @@
             const nnBoost = getMultiplierForCategory('nonut');
             const slBoost = getMultiplierForCategory('sleep');
             
-            let boostText = "Total: ";
             let parts = [];
             if (config.modules.nonut) { parts.push(`🚫 +${nnBoost}% XP`); }
             if (config.modules.sleep) { parts.push(`💤 +${slBoost}% XP`); }
@@ -1304,23 +1356,23 @@
             document.getElementById('toggle-nonut').checked = config.modules.nonut;
             document.getElementById('toggle-sleep').checked = config.modules.sleep;
             document.getElementById('allowed-limit-input').value = config.allowedLimit || 1;
-            const sel = document.getElementById('target-time-select'); sel.innerHTML = ''; config.wakeTimes.forEach(t => { sel.innerHTML += `<option value="${t.v}" ${config.targetWakeTime==t.v?'selected':''}>${t.l}</option>`; }); 
+            document.getElementById('target-time-input').value = config.targetWakeTime || "08:00";
             const makeChecks = (id, src, all) => { const c = document.getElementById(id); c.innerHTML=''; all.forEach((d,i)=>{ c.innerHTML+=`<label><input type="checkbox" value="${i}" ${src.includes(i)?'checked':''}> ${d}</label>`; }); }; makeChecks('days-list', config.allowedDays, days); makeChecks('exempt-list', config.sleepExemptDays, days);
         }
 
         function saveSettings() {
             config.modules.nonut = document.getElementById('toggle-nonut').checked;
             config.modules.sleep = document.getElementById('toggle-sleep').checked;
-            config.targetWakeTime = parseFloat(document.getElementById('target-time-select').value);
+            config.targetWakeTime = document.getElementById('target-time-input').value;
             config.allowedLimit = parseInt(document.getElementById('allowed-limit-input').value) || 1;
             const getVals = (id) => Array.from(document.querySelectorAll(`#${id} input:checked`)).map(cb=>parseInt(cb.value));
             config.allowedDays = getVals('days-list'); config.sleepExemptDays = getVals('exempt-list');
             currentWeek.forEach((d, i) => { d.allowed = config.allowedDays.includes(i); d.exempt = config.sleepExemptDays.includes(i); });
-            save(); renderLog(); renderRewards(); renderStats(); updateFabState(); alert("Settings saved!");
+            save(); renderLog(); renderRewards(); updateFabState(); alert("Settings saved!");
         }
 
         function resetData(){ if(confirm("WARNING: All data will be deleted.")) { localStorage.clear(); location.reload(); } }
-        function switchTab(id) { document.querySelectorAll('.content-section').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.classList.add('active'); if(id==='stats') renderStats(); if(id==='gallery') renderGallery(); updateFabState(); if(id==='rewards') renderRewards(); }
+        function switchTab(id) { document.querySelectorAll('.content-section').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active')); document.getElementById(id).classList.add('active'); event.target.classList.add('active'); if(id==='gallery') renderGallery(); updateFabState(); if(id==='rewards') renderRewards(); }
         function openModal(src){ document.getElementById('modalImg').src=src; document.getElementById('imgModal').style.display='flex'; }
         function exportData() { const data = { config, rewards, rpg, currentWeek, archive, exportDate: new Date().toISOString() }; const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); const a = document.createElement('a'); a.href = dataStr; a.download = "waifu_tracker_backup.json"; a.click(); }
         function importData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const json = JSON.parse(e.target.result); if(json.config) localStorage.setItem('wt_config', JSON.stringify(json.config)); if(json.rewards) localStorage.setItem('wt_rewards', JSON.stringify(json.rewards)); if(json.rpg) localStorage.setItem('wt_rpg', JSON.stringify(json.rpg)); if(json.currentWeek) localStorage.setItem('wt_week', JSON.stringify(json.currentWeek)); if(json.archive) localStorage.setItem('wt_archive', JSON.stringify(json.archive)); if(json.unlocks) localStorage.setItem('wt_unlocks', JSON.stringify(json.unlocks)); if(json.equipped) localStorage.setItem('wt_equipped', JSON.stringify(json.equipped)); if(json.slots) localStorage.setItem('wt_slots', JSON.stringify(json.slots)); alert("Data imported!"); location.reload(); } catch(err) { alert("Import error."); } }; reader.readAsText(file); }
